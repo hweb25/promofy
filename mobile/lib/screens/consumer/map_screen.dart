@@ -61,8 +61,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         circleId: CircleId(p.id),
                         center: LatLng(p.latitude!, p.longitude!),
                         radius: (p.geofenceRadius ?? 200).toDouble(),
-                        fillColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        strokeColor: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        fillColor: AppTheme.primaryColor.withOpacity(0.1),
+                        strokeColor: AppTheme.primaryColor.withOpacity(0.3),
                         strokeWidth: 2,
                       ))
                   .toSet();
@@ -162,7 +162,7 @@ class _PromotionMapCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -174,7 +174,7 @@ class _PromotionMapCard extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                color: AppTheme.primaryColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
@@ -243,7 +243,7 @@ class _FilterChip extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
         elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.1),
+        shadowColor: Colors.black.withOpacity(0.1),
       ),
     );
   }

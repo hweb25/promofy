@@ -165,7 +165,7 @@ class _PlanCard extends StatelessWidget {
           width: isCurrentPlan ? 2 : 1,
         ),
         boxShadow: isPopular
-            ? [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 8))]
+            ? [BoxShadow(color: color.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 8))]
             : null,
       ),
       child: Column(
@@ -197,7 +197,7 @@ class _PlanCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
+                          color: color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text('CURRENT', style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 11)),

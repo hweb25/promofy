@@ -42,7 +42,7 @@ class BusinessHomeScreen extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: _tierColor(biz.subscriptionTier).withValues(alpha: 0.1),
+                                color: _tierColor(biz.subscriptionTier).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -211,7 +211,7 @@ class BusinessHomeScreen extends ConsumerWidget {
                                 Container(
                                   width: 48, height: 48,
                                   decoration: BoxDecoration(
-                                    color: _statusColor(p.status).withValues(alpha: 0.1),
+                                    color: _statusColor(p.status).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Icon(_statusIcon(p.status), color: _statusColor(p.status)),
@@ -231,7 +231,7 @@ class BusinessHomeScreen extends ConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: _statusColor(p.status).withValues(alpha: 0.1),
+                                    color: _statusColor(p.status).withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -325,7 +325,7 @@ class _MetricCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
+          color: color.withOpacity(0.08),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -335,7 +335,7 @@ class _MetricCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.7))),
+            Text(label, style: TextStyle(fontSize: 12, color: color.withOpacity(0.7))),
           ],
         ),
       ),

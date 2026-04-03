@@ -116,7 +116,7 @@ class _CreatePromotionScreenState extends ConsumerState<CreatePromotionScreen> {
                     child: ActionChip(
                       label: Text(t['title']!),
                       onPressed: () => _applyTemplate(t),
-                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                       labelStyle: const TextStyle(color: AppTheme.primaryColor),
                     ),
                   )).toList(),
@@ -237,7 +237,7 @@ class _CreatePromotionScreenState extends ConsumerState<CreatePromotionScreen> {
                     label: Text(day.substring(0, 3).toUpperCase()),
                     selected: selected,
                     onSelected: (v) => setState(() => v ? _activeDays.add(day) : _activeDays.remove(day)),
-                    selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                    selectedColor: AppTheme.primaryColor.withOpacity(0.2),
                     checkmarkColor: AppTheme.primaryColor,
                   );
                 }).toList(),
@@ -281,7 +281,7 @@ class _CreatePromotionScreenState extends ConsumerState<CreatePromotionScreen> {
       label: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 16), const SizedBox(width: 4), Text(label)]),
       selected: selected,
       onSelected: (_) => setState(() => _discountType = type),
-      selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
     );
   }
 }

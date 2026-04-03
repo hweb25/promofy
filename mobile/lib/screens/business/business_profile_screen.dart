@@ -132,7 +132,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                       child: const Icon(Icons.store, size: 40, color: AppTheme.primaryColor),
                     ),
                     Positioned(
@@ -182,7 +182,7 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                   label: Text(c.$2),
                   selected: _category == c.$1,
                   onSelected: (_) => setState(() => _category = c.$1),
-                  selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                  selectedColor: AppTheme.primaryColor.withOpacity(0.2),
                 )).toList(),
               ),
               const SizedBox(height: 16),

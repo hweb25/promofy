@@ -103,7 +103,7 @@ class AnalyticsScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppTheme.primaryColor, AppTheme.primaryColor.withValues(alpha: 0.8)],
+                        colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
                       ),
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -120,7 +120,7 @@ class AnalyticsScreen extends ConsumerWidget {
                             ),
                             Text(
                               'Active Promotions',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.8)),
+                              style: TextStyle(color: Colors.white.withOpacity(0.8)),
                             ),
                           ],
                         ),
@@ -133,9 +133,9 @@ class AnalyticsScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppTheme.successColor.withValues(alpha: 0.08),
+                      color: AppTheme.successColor.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.successColor.withValues(alpha: 0.2)),
+                      border: Border.all(color: AppTheme.successColor.withOpacity(0.2)),
                     ),
                     child: Row(
                       children: [
@@ -185,7 +185,7 @@ class _FunnelCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4)),
         ],
       ),
       child: Column(
@@ -210,7 +210,7 @@ class _FunnelCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: ratio.toDouble(),
-                    backgroundColor: step.color.withValues(alpha: 0.1),
+                    backgroundColor: step.color.withOpacity(0.1),
                     color: step.color,
                     minHeight: 8,
                   ),
@@ -247,7 +247,7 @@ class _RateCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 4)),
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 16, offset: const Offset(0, 4)),
           ],
         ),
         child: Column(

@@ -135,7 +135,7 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -148,11 +148,11 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
                         version: QrVersions.auto,
                         size: 250,
                         eyeStyle: const QrEyeStyle(
-                          eyeShape: QrEyeShape.roundedRect,
+                          eyeShape: QrEyeShape.square,
                           color: AppTheme.primaryColor,
                         ),
                         dataModuleStyle: const QrDataModuleStyle(
-                          dataModuleShape: QrDataModuleShape.roundedRect,
+                          dataModuleShape: QrDataModuleShape.square,
                           color: AppTheme.textPrimary,
                         ),
                       ),
@@ -195,7 +195,7 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
-                      color: AppTheme.errorColor.withValues(alpha: 0.1),
+                      color: AppTheme.errorColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
@@ -210,7 +210,7 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                    color: AppTheme.primaryColor.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Row(

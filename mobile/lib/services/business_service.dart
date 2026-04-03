@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'supabase_service.dart';
 import '../models/business.dart';
 
@@ -86,7 +87,7 @@ class BusinessService {
   // Upload business logo
   Future<String> uploadLogo(String businessId, List<int> bytes, String fileName) async {
     final path = 'businesses/$businessId/logo_$fileName';
-    await _client.storage.from('business-assets').uploadBinary(path, bytes);
+    await _client.storage.from('business-assets').uploadBinary(path, Uint8List.fromList(bytes));
     return _client.storage.from('business-assets').getPublicUrl(path);
   }
 }

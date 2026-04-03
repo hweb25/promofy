@@ -14,6 +14,8 @@ export interface Business {
   operating_hours: Record<string, { open: string; close: string }>;
   subscription_tier: "free" | "premium" | "gold";
   geofence_radius_meters: number;
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
   is_verified: boolean;
   is_active: boolean;
   created_at: string;

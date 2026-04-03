@@ -22,7 +22,7 @@ class ProfileScreen extends ConsumerWidget {
             // Avatar
             CircleAvatar(
               radius: 50,
-              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
               child: Text(
                 (profile.valueOrNull?['full_name'] ?? 'U')[0].toUpperCase(),
                 style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
@@ -93,7 +93,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
+          color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -101,7 +101,7 @@ class _StatCard extends StatelessWidget {
             Icon(icon, color: color, size: 32),
             const SizedBox(height: 8),
             Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: TextStyle(color: color.withValues(alpha: 0.7))),
+            Text(label, style: TextStyle(color: color.withOpacity(0.7))),
           ],
         ),
       ),

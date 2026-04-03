@@ -60,7 +60,7 @@ class _PromotionDetailScreenState extends ConsumerState<PromotionDetailScreen> {
                       end: Alignment.bottomCenter,
                       colors: [
                         AppTheme.primaryColor,
-                        AppTheme.primaryColor.withValues(alpha: 0.8),
+                        AppTheme.primaryColor.withOpacity(0.8),
                       ],
                     ),
                   ),
@@ -202,7 +202,7 @@ class _PromotionDetailScreenState extends ConsumerState<PromotionDetailScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),

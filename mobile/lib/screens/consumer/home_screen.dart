@@ -58,7 +58,7 @@ class HomeScreen extends ConsumerWidget {
                         onTap: () => context.go('/consumer/profile'),
                         child: CircleAvatar(
                           radius: 24,
-                          backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                          backgroundColor: AppTheme.primaryColor.withOpacity( 0.1),
                           child: const Icon(Icons.person, color: AppTheme.primaryColor),
                         ),
                       ),
@@ -220,7 +220,7 @@ class _CategoryChip extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity( 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(icon, color: color, size: 28),

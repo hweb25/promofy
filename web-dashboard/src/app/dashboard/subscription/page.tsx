@@ -82,9 +82,60 @@ export default function SubscriptionPage() {
     setLoading(false);
   }
 
-  function handleUpgrade(tier: string) {
-    // TODO: Redirect to Stripe Checkout
-    toast.success(`Stripe checkout for ${tier} plan coming soon!`);
+  const [upgrading, setUpgrading] = useState<string | null>(null);
+
+  async function handleUpgrade(tier: string) {
+    setUpgrading(tier);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user || !business) {
+        toast.error("Please log in and set up your business first");
+        return;
+      }
+
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tier,
+          userId: user.id,
+          businessId: business.id,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.error || "Failed to start checkout");
+      }
+    } catch (err) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setUpgrading(null);
+    }
+  }
+
+  async function handleManageBilling() {
+    if (!business?.stripe_customer_id) {
+      toast.error("No active subscription to manage");
+      return;
+    }
+    try {
+      const res = await fetch("/api/stripe/portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId: business.stripe_customer_id }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      toast.error("Failed to open billing portal");
+    }
   }
 
   if (loading) {
@@ -105,6 +156,23 @@ export default function SubscriptionPage() {
           Choose the plan that fits your business needs
         </p>
       </div>
+
+      {business?.stripe_customer_id && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center justify-between">
+          <div>
+            <p className="font-semibold text-green-800">
+              Current Plan: {currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
+            </p>
+            <p className="text-sm text-green-600">Manage your billing, invoices, and payment method</p>
+          </div>
+          <button
+            onClick={handleManageBilling}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Manage Billing
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => {
@@ -161,13 +229,16 @@ export default function SubscriptionPage() {
                 {!isCurrent && (
                   <button
                     onClick={() => handleUpgrade(plan.tier)}
-                    className={`w-full py-3 rounded-xl font-semibold transition-colors ${
+                    disabled={upgrading === plan.tier}
+                    className={`w-full py-3 rounded-xl font-semibold transition-colors disabled:opacity-50 ${
                       plan.popular
                         ? "bg-primary-500 text-white hover:bg-primary-600"
                         : "border border-gray-200 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
-                    {plan.tier === "free"
+                    {upgrading === plan.tier
+                      ? "Redirecting to checkout..."
+                      : plan.tier === "free"
                       ? "Downgrade"
                       : `Upgrade to ${plan.name}`}
                   </button>

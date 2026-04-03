@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/material.dart' show Color;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'auth_service.dart';
@@ -136,7 +137,4 @@ class NotificationService {
   }
 }
 
-class Color {
-  final int value;
-  const Color(this.value);
-}
+// Color is imported from dart:ui via flutter/material.dart

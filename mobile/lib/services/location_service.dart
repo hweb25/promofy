@@ -28,10 +28,7 @@ class LocationService {
       if (!hasPermission) return null;
 
       return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
+        desiredAccuracy: LocationAccuracy.high,
       );
     } catch (e) {
       return null;
@@ -44,7 +41,7 @@ class LocationService {
   }) {
     return Geolocator.getPositionStream(
       locationSettings: LocationSettings(
-        accuracy: LocationAccuracy.balanced,
+        accuracy: LocationAccuracy.medium,
         distanceFilter: distanceFilter,
       ),
     );
@@ -58,7 +55,7 @@ class LocationService {
     _positionSubscription?.cancel();
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: LocationSettings(
-        accuracy: LocationAccuracy.balanced,
+        accuracy: LocationAccuracy.medium,
         distanceFilter: distanceFilter,
       ),
     ).listen(onPositionUpdate);
