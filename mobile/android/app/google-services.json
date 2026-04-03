@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "990656781474",
+    "project_id": "promofy-67506",
+    "storage_bucket": "promofy-67506.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:990656781474:android:94bf6676227a0ce26a4bfb",
+        "android_client_info": {
+          "package_name": "com.promofy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCLEdEqg5mDY8lLHnM7u1WP9MxmMcUL75s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

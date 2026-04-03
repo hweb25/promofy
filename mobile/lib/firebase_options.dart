@@ -15,22 +15,21 @@ class DefaultFirebaseOptions {
     throw UnsupportedError('DefaultFirebaseOptions are not supported for this platform.');
   }
 
-  // TODO: Replace with values from google-services.json after Firebase Android app setup
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR_ANDROID_API_KEY',
-    appId: 'YOUR_ANDROID_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'promofy-app',
-    storageBucket: 'promofy-app.firebasestorage.app',
+    apiKey: 'AIzaSyCLEdEqg5mDY8lLHnM7u1WP9MxmMcUL75s',
+    appId: '1:990656781474:android:94bf6676227a0ce26a4bfb',
+    messagingSenderId: '990656781474',
+    projectId: 'promofy-67506',
+    storageBucket: 'promofy-67506.firebasestorage.app',
   );
 
-  // TODO: Replace with values from GoogleService-Info.plist after Firebase iOS app setup
+  // TODO: Update with iOS-specific values from GoogleService-Info.plist once iOS app is added
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_SENDER_ID',
-    projectId: 'promofy-app',
-    storageBucket: 'promofy-app.firebasestorage.app',
+    apiKey: 'AIzaSyCLEdEqg5mDY8lLHnM7u1WP9MxmMcUL75s',
+    appId: '1:990656781474:android:94bf6676227a0ce26a4bfb', // Replace with iOS app ID
+    messagingSenderId: '990656781474',
+    projectId: 'promofy-67506',
+    storageBucket: 'promofy-67506.firebasestorage.app',
     iosBundleId: 'com.promofy.app',
   );
 }
