@@ -13,8 +13,8 @@ const supabaseAdmin = createClient(
 
 // Stripe Price IDs - set these after creating products in Stripe Dashboard
 const PRICE_IDS: Record<string, string> = {
-  premium: process.env.STRIPE_PREMIUM_PRICE_ID || "price_premium_placeholder",
-  gold: process.env.STRIPE_GOLD_PRICE_ID || "price_gold_placeholder",
+  premium: process.env.STRIPE_PREMIUM_PRICE_ID || "price_1TICCK2cfjexrkBqpbr03cXE",
+  gold: process.env.STRIPE_GOLD_PRICE_ID || "price_1TICCL2cfjexrkBqIFUwYHbg",
 };
 
 export async function POST(req: NextRequest) {

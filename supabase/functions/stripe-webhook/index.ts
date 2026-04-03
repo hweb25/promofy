@@ -11,12 +11,8 @@ const corsHeaders = {
 
 // Tier mapping based on Stripe price IDs
 const TIER_MAP: Record<string, { tier: string; radius: number }> = {
-  // TODO: Replace with your actual Stripe price IDs
-  price_free: { tier: "free", radius: 100 },
-  price_premium_49: { tier: "premium", radius: 500 },
-  price_premium_79: { tier: "premium", radius: 1000 },
-  price_gold_129: { tier: "gold", radius: 2000 },
-  price_gold_199: { tier: "gold", radius: 5000 },
+  "price_1TICCK2cfjexrkBqpbr03cXE": { tier: "premium", radius: 1000 },
+  "price_1TICCL2cfjexrkBqIFUwYHbg": { tier: "gold", radius: 5000 },
 };
 
 Deno.serve(async (req: Request) => {
