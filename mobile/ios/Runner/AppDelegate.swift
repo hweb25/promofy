@@ -14,7 +14,7 @@ import FirebaseMessaging
     FirebaseApp.configure()
 
     // Initialize Google Maps - replace with your API key
-    GMSServices.provideAPIKey("YOUR_GOOGLE_MAPS_KEY")
+    GMSServices.provideAPIKey("AIzaSyAu5GpxNHKQ3zuSNCzFzDsFM9LO3WByvbs")
 
     // Register for push notifications
     UNUserNotificationCenter.current().delegate = self

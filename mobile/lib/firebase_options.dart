@@ -23,10 +23,9 @@ class DefaultFirebaseOptions {
     storageBucket: 'promofy-67506.firebasestorage.app',
   );
 
-  // TODO: Update with iOS-specific values from GoogleService-Info.plist once iOS app is added
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCLEdEqg5mDY8lLHnM7u1WP9MxmMcUL75s',
-    appId: '1:990656781474:android:94bf6676227a0ce26a4bfb', // Replace with iOS app ID
+    apiKey: 'AIzaSyCo0k548RmPpf_8VYhH8FEDb46iUWVrL9Q',
+    appId: '1:990656781474:ios:b8e698b2e1f840c66a4bfb',
     messagingSenderId: '990656781474',
     projectId: 'promofy-67506',
     storageBucket: 'promofy-67506.firebasestorage.app',

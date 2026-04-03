@@ -4,7 +4,7 @@ class AppConfig {
   static const String supabaseAnonKey = 'sb_publishable_V0Oq0D3uOnV9PPL86ww_1A_qxcFAdcI';
 
   // Google Maps API Key
-  static const String googleMapsApiKey = 'YOUR_GOOGLE_MAPS_KEY';
+  static const String googleMapsApiKey = 'AIzaSyAu5GpxNHKQ3zuSNCzFzDsFM9LO3WByvbs';
 
   // Geofencing defaults
   static const int defaultGeofenceRadiusMeters = 500;
