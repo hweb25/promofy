@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.dart_tool/
+.packages
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flutter
+mobile/build/
+mobile/.dart_tool/
+mobile/.packages
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/android/.gradle/
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist
+
+# Next.js
+web-dashboard/.next/
+web-dashboard/out/
+web-dashboard/node_modules/
+
+# Supabase
+supabase/.temp/
+
+# Migration helper
+run_migration.js
+package.json
+package-lock.json
+node_modules/
