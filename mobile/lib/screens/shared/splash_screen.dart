@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
-import '../../providers/auth_provider.dart';
+import '../../services/supabase_service.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -38,19 +38,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    final authState = ref.read(authStateProvider);
-    authState.whenData((state) {
-      if (state.session != null) {
-        final role = ref.read(userRoleProvider);
-        if (role == 'business_owner') {
-          context.go('/business');
-        } else {
-          context.go('/consumer');
-        }
+    try {
+      final session = SupabaseService.auth.currentSession;
+      if (session != null) {
+        // User is logged in - go to consumer home
+        if (mounted) context.go('/consumer');
       } else {
-        context.go('/onboarding');
+        // Not logged in - go to onboarding
+        if (mounted) context.go('/onboarding');
       }
-    });
+    } catch (e) {
+      debugPrint('Splash navigation error: $e');
+      if (mounted) context.go('/onboarding');
+    }
   }
 
   @override

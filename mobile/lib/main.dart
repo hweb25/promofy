@@ -26,17 +26,31 @@ void main() async {
   ]);
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase init error: $e');
+  }
 
   // Initialize Supabase
-  await SupabaseService.initialize();
+  try {
+    await SupabaseService.initialize();
+  } catch (e) {
+    debugPrint('Supabase init error: $e');
+  }
 
-  // Initialize push notifications
-  final notificationService = NotificationService();
-  await notificationService.initialize();
+  // Initialize push notifications (non-blocking)
+  try {
+    final notificationService = NotificationService();
+    notificationService.initialize().catchError((e) {
+      debugPrint('Notification init error: $e');
+    });
+  } catch (e) {
+    debugPrint('Notification setup error: $e');
+  }
 
   // Set status bar style
   SystemChrome.setSystemUIOverlayStyle(
