@@ -9,6 +9,7 @@ import 'config/theme.dart';
 import 'config/router.dart';
 import 'services/supabase_service.dart';
 import 'services/notification_service.dart';
+import 'services/proximity_service.dart';
 
 // Background message handler - must be top-level function
 @pragma('vm:entry-point')
@@ -61,8 +62,14 @@ void main() async {
     // Initialize notifications AFTER app is running (non-blocking)
     try {
       final notificationService = NotificationService();
-      notificationService.initialize().catchError((e) {
+      notificationService.initialize().then((_) {
+        // Start proximity monitoring after notifications are ready
+        debugPrint('Starting proximity monitoring...');
+        ProximityService().startMonitoring();
+      }).catchError((e) {
         debugPrint('Notification init error: $e');
+        // Start proximity anyway
+        ProximityService().startMonitoring();
       });
     } catch (e) {
       debugPrint('Notification setup error: $e');

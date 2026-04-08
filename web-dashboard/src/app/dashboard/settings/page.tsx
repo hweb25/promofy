@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Business } from "@/types";
 import toast from "react-hot-toast";
 import { Store, MapPin, Clock, Save } from "lucide-react";
+
+const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY || "AIzaSyAu5GpxNHKQ3zuSNCzFzDsFM9LO3WByvbs";
 
 const categories = [
   { value: "restaurant", label: "Restaurant" },
@@ -28,6 +30,8 @@ export default function SettingsPage() {
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
 
   useEffect(() => {
     loadData();
@@ -54,8 +58,29 @@ export default function SettingsPage() {
       setCity(biz.city);
       setPhone(biz.phone || "");
       setEmail(biz.email || "");
+      // Extract lat/lng from PostGIS point if available
+      if (biz.latitude) setLat(biz.latitude);
+      if (biz.longitude) setLng(biz.longitude);
     }
     setLoading(false);
+  }
+
+  // Geocode address using Google Maps API
+  async function geocodeAddress(addr: string, cityName: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const query = encodeURIComponent(`${addr}, ${cityName}`);
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${GOOGLE_MAPS_KEY}`
+      );
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        return { lat, lng };
+      }
+    } catch (e) {
+      console.error("Geocoding error:", e);
+    }
+    return null;
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -68,17 +93,34 @@ export default function SettingsPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const payload = {
+      // Geocode the address
+      let coords = lat && lng ? { lat, lng } : null;
+      if (address && city) {
+        const geocoded = await geocodeAddress(address, city);
+        if (geocoded) {
+          coords = geocoded;
+          setLat(geocoded.lat);
+          setLng(geocoded.lng);
+        }
+      }
+
+      const payload: any = {
         name,
         description,
         category,
         address_line1: address,
         city,
-        country: "CO",
+        country: "MX",
         phone,
         email,
-        location: `POINT(-74.0721 4.7110)`, // TODO: geocode from address
       };
+
+      // Add location as PostGIS point if we have coordinates
+      if (coords) {
+        payload.location = `POINT(${coords.lng} ${coords.lat})`;
+        payload.latitude = coords.lat;
+        payload.longitude = coords.lng;
+      }
 
       if (business) {
         const { error } = await supabase
@@ -102,6 +144,15 @@ export default function SettingsPage() {
       setSaving(false);
     }
   }
+
+  // Build map URL
+  const mapQuery = encodeURIComponent(
+    lat && lng
+      ? `${lat},${lng}`
+      : address && city
+      ? `${address}, ${city}`
+      : city || "Mexico"
+  );
 
   if (loading) {
     return (
@@ -192,7 +243,7 @@ export default function SettingsPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="input"
-                  placeholder="+57 300 123 4567"
+                  placeholder="+52 999 123 4567"
                 />
               </div>
               <div>
@@ -242,19 +293,27 @@ export default function SettingsPage() {
                 onChange={(e) => setCity(e.target.value)}
                 className="input"
                 required
-                placeholder="e.g., Bogota"
+                placeholder="e.g., Merida"
               />
             </div>
 
-            {/* Map placeholder */}
-            <div className="h-48 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-              <div className="text-center">
-                <MapPin className="w-8 h-8 mx-auto mb-2" />
-                <p className="text-sm">
-                  Map preview will appear here after saving
-                </p>
-              </div>
+            {/* Live Map Preview */}
+            <div className="h-64 rounded-xl overflow-hidden border border-gray-200">
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_KEY}&q=${mapQuery}&zoom=15`}
+              />
             </div>
+
+            {lat && lng && (
+              <p className="text-xs text-gray-400">
+                Coordinates: {lat.toFixed(6)}, {lng.toFixed(6)}
+              </p>
+            )}
           </div>
         </div>
 
