@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'config/theme.dart';
 import 'config/router.dart';
@@ -25,9 +24,6 @@ void main() async {
 
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-
-    // Prevent google_fonts from crashing - use local fonts
-    GoogleFonts.config.allowRuntimeFetching = false;
 
     // Lock orientation
     await SystemChrome.setPreferredOrientations([

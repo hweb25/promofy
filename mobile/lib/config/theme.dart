@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Brand Colors
@@ -23,41 +22,11 @@ class AppTheme {
   static const Color darkSurface = Color(0xFF16213E);
   static const Color darkCard = Color(0xFF0F3460);
 
-  static TextTheme _poppinsTextTheme([TextTheme? base]) {
-    try {
-      if (base != null) {
-        return GoogleFonts.poppinsTextTheme(base);
-      }
-      return GoogleFonts.poppinsTextTheme();
-    } catch (e) {
-      return base ?? const TextTheme();
-    }
-  }
-
-  static TextStyle _poppinsStyle({
-    Color? color,
-    double? fontSize,
-    FontWeight? fontWeight,
-  }) {
-    try {
-      return GoogleFonts.poppins(
-        color: color,
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-      );
-    } catch (e) {
-      return TextStyle(
-        color: color,
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-      );
-    }
-  }
-
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: 'Poppins',
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         primary: primaryColor,
@@ -66,17 +35,17 @@ class AppTheme {
         error: errorColor,
       ),
       scaffoldBackgroundColor: backgroundColor,
-      textTheme: _poppinsTextTheme(),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: surfaceColor,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: _poppinsStyle(
+        titleTextStyle: TextStyle(
+          fontFamily: 'Poppins',
           color: textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: const IconThemeData(color: textPrimary),
+        iconTheme: IconThemeData(color: textPrimary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -87,7 +56,8 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: _poppinsStyle(
+          textStyle: const TextStyle(
+            fontFamily: 'Poppins',
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -141,6 +111,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: 'Poppins',
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.dark,
@@ -149,7 +120,6 @@ class AppTheme {
         surface: darkSurface,
       ),
       scaffoldBackgroundColor: darkBackground,
-      textTheme: _poppinsTextTheme(ThemeData.dark().textTheme),
       cardTheme: CardTheme(
         elevation: 0,
         shape: RoundedRectangleBorder(
