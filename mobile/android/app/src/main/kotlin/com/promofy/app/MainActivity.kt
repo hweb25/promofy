@@ -1,4 +1,4 @@
-package com.promofy.promofy
+package com.promofy.app
 
 import io.flutter.embedding.android.FlutterActivity
 
