@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'firebase_options.dart';
 import 'config/theme.dart';
 import 'config/router.dart';
@@ -13,54 +15,66 @@ import 'services/notification_service.dart';
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  // Handle background message silently
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // Catch all Flutter errors
+  FlutterError.onError = (details) {
+    debugPrint('Flutter error: ${details.exceptionAsString()}');
+  };
 
-  // Lock orientation
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+    // Prevent google_fonts from crashing - use local fonts
+    GoogleFonts.config.allowRuntimeFetching = false;
+
+    // Lock orientation
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
+    // Initialize Firebase
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    } catch (e) {
+      debugPrint('Firebase init error: $e');
+    }
+
+    // Initialize Supabase
+    try {
+      await SupabaseService.initialize();
+    } catch (e) {
+      debugPrint('Supabase init error: $e');
+    }
+
+    // Set status bar style
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
     );
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  } catch (e) {
-    debugPrint('Firebase init error: $e');
-  }
 
-  // Initialize Supabase
-  try {
-    await SupabaseService.initialize();
-  } catch (e) {
-    debugPrint('Supabase init error: $e');
-  }
+    runApp(const ProviderScope(child: PromofyApp()));
 
-  // Initialize push notifications (non-blocking)
-  try {
-    final notificationService = NotificationService();
-    notificationService.initialize().catchError((e) {
-      debugPrint('Notification init error: $e');
-    });
-  } catch (e) {
-    debugPrint('Notification setup error: $e');
-  }
-
-  // Set status bar style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-    ),
-  );
-
-  runApp(const ProviderScope(child: PromofyApp()));
+    // Initialize notifications AFTER app is running (non-blocking)
+    try {
+      final notificationService = NotificationService();
+      notificationService.initialize().catchError((e) {
+        debugPrint('Notification init error: $e');
+      });
+    } catch (e) {
+      debugPrint('Notification setup error: $e');
+    }
+  }, (error, stack) {
+    debugPrint('Uncaught error: $error');
+    debugPrint('Stack: $stack');
+  });
 }
 
 class PromofyApp extends ConsumerWidget {

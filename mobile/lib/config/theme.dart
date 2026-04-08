@@ -23,6 +23,37 @@ class AppTheme {
   static const Color darkSurface = Color(0xFF16213E);
   static const Color darkCard = Color(0xFF0F3460);
 
+  static TextTheme _poppinsTextTheme([TextTheme? base]) {
+    try {
+      if (base != null) {
+        return GoogleFonts.poppinsTextTheme(base);
+      }
+      return GoogleFonts.poppinsTextTheme();
+    } catch (e) {
+      return base ?? const TextTheme();
+    }
+  }
+
+  static TextStyle _poppinsStyle({
+    Color? color,
+    double? fontSize,
+    FontWeight? fontWeight,
+  }) {
+    try {
+      return GoogleFonts.poppins(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+      );
+    } catch (e) {
+      return TextStyle(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+      );
+    }
+  }
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -35,12 +66,12 @@ class AppTheme {
         error: errorColor,
       ),
       scaffoldBackgroundColor: backgroundColor,
-      textTheme: GoogleFonts.poppinsTextTheme(),
+      textTheme: _poppinsTextTheme(),
       appBarTheme: AppBarTheme(
         backgroundColor: surfaceColor,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: _poppinsStyle(
           color: textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -56,7 +87,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.poppins(
+          textStyle: _poppinsStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -118,7 +149,7 @@ class AppTheme {
         surface: darkSurface,
       ),
       scaffoldBackgroundColor: darkBackground,
-      textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+      textTheme: _poppinsTextTheme(ThemeData.dark().textTheme),
       cardTheme: CardTheme(
         elevation: 0,
         shape: RoundedRectangleBorder(

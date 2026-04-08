@@ -11,56 +11,69 @@ class NotificationService {
   final AuthService _authService = AuthService();
 
   Future<void> initialize() async {
-    // Request permission
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
-
-    // Initialize local notifications
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-
-    await _localNotifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationTap,
-    );
-
-    // Create notification channel (Android)
-    const channel = AndroidNotificationChannel(
-      'promofy_promotions',
-      'Promotions',
-      description: 'Nearby promotion notifications',
-      importance: Importance.high,
-    );
-
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-
-    // Get and save token
-    final token = await _messaging.getToken();
-    if (token != null) {
-      final platform = Platform.isIOS ? 'ios' : 'android';
-      await _authService.updatePushToken(token, platform);
+    try {
+      // Request permission
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+    } catch (e) {
+      // Permission request may fail on some devices
+      return;
     }
 
-    // Listen for token refresh
-    _messaging.onTokenRefresh.listen((token) {
-      final platform = Platform.isIOS ? 'ios' : 'android';
-      _authService.updatePushToken(token, platform);
-    });
+    try {
+      // Initialize local notifications
+      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      const initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
+
+      await _localNotifications.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTap,
+      );
+
+      // Create notification channel (Android)
+      const channel = AndroidNotificationChannel(
+        'promofy_promotions',
+        'Promotions',
+        description: 'Nearby promotion notifications',
+        importance: Importance.high,
+      );
+
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
+    } catch (e) {
+      // Local notifications init may fail
+    }
+
+    try {
+      // Get and save token (only if user is logged in)
+      final token = await _messaging.getToken();
+      if (token != null) {
+        final platform = Platform.isIOS ? 'ios' : 'android';
+        await _authService.updatePushToken(token, platform);
+      }
+
+      // Listen for token refresh
+      _messaging.onTokenRefresh.listen((token) {
+        final platform = Platform.isIOS ? 'ios' : 'android';
+        _authService.updatePushToken(token, platform).catchError((_) {});
+      });
+    } catch (e) {
+      // Token operations may fail if not logged in
+    }
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
