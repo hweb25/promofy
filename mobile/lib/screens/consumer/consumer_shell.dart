@@ -9,50 +9,68 @@ class ConsumerShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundColor,
       body: child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
+      bottomNavigationBar: _FloatingNavBar(),
+    );
+  }
+}
+
+class _FloatingNavBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+
+    final items = [
+      _NavItemData(
+        icon: Icons.home_rounded,
+        outlinedIcon: Icons.home_outlined,
+        label: 'Home',
+        route: '/consumer',
+      ),
+      _NavItemData(
+        icon: Icons.explore_rounded,
+        outlinedIcon: Icons.explore_outlined,
+        label: 'Explore',
+        route: '/consumer/map',
+      ),
+      _NavItemData(
+        icon: Icons.local_offer_rounded,
+        outlinedIcon: Icons.local_offer_outlined,
+        label: 'Deals',
+        route: '/consumer/promotions',
+      ),
+      _NavItemData(
+        icon: Icons.person_rounded,
+        outlinedIcon: Icons.person_outline_rounded,
+        label: 'Profile',
+        route: '/consumer/profile',
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/consumer',
-                  onTap: () => context.go('/consumer'),
-                ),
-                _NavItem(
-                  icon: Icons.map_rounded,
-                  label: 'Map',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/consumer/map',
-                  onTap: () => context.go('/consumer/map'),
-                ),
-                _NavItem(
-                  icon: Icons.local_offer_rounded,
-                  label: 'Deals',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/consumer/promotions',
-                  onTap: () => context.go('/consumer/promotions'),
-                ),
-                _NavItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/consumer/profile',
-                  onTap: () => context.go('/consumer/profile'),
-                ),
-              ],
-            ),
+        boxShadow: AppTheme.navShadow,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: items.map((item) {
+              final isSelected = location == item.route;
+              return _NavItemWidget(
+                item: item,
+                isSelected: isSelected,
+                onTap: () => context.go(item.route),
+              );
+            }).toList(),
           ),
         ),
       ),
@@ -60,15 +78,27 @@ class ConsumerShell extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatelessWidget {
+class _NavItemData {
   final IconData icon;
+  final IconData outlinedIcon;
   final String label;
+  final String route;
+
+  const _NavItemData({
+    required this.icon,
+    required this.outlinedIcon,
+    required this.label,
+    required this.route,
+  });
+}
+
+class _NavItemWidget extends StatelessWidget {
+  final _NavItemData item;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _NavItem({
-    required this.icon,
-    required this.label,
+  const _NavItemWidget({
+    required this.item,
     required this.isSelected,
     required this.onTap,
   });
@@ -78,29 +108,63 @@ class _NavItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
+      child: SizedBox(
+        width: 72,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? AppTheme.primaryColor : AppTheme.textLight,
-              size: 24,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              width: isSelected ? 52 : 44,
+              height: isSelected ? 52 : 44,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppTheme.primaryColor.withOpacity(0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      isSelected ? item.icon : item.outlinedIcon,
+                      key: ValueKey(isSelected),
+                      size: isSelected ? 26 : 24,
+                      color: isSelected ? AppTheme.primaryColor : AppTheme.textLight,
+                    ),
+                  ),
+
+                  // Active dot indicator
+                  if (isSelected)
+                    Positioned(
+                      bottom: 6,
+                      child: Container(
+                        width: 4,
+                        height: 4,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
+
             const SizedBox(height: 4),
-            Text(
-              label,
+
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                 color: isSelected ? AppTheme.primaryColor : AppTheme.textLight,
               ),
+              child: Text(item.label),
             ),
           ],
         ),
