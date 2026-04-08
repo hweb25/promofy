@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -28,11 +29,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOutCubic,
       );
     } else {
-      context.go('/auth/login');
+      _finishOnboarding();
     }
   }
 
-  void _skip() => context.go('/auth/login');
+  void _skip() => _finishOnboarding();
+
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_onboarded', true);
+    if (mounted) context.go('/auth/login');
+  }
 
   @override
   void dispose() {
@@ -197,7 +204,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 12),
                           child: TextButton(
-                            onPressed: () => context.go('/auth/login'),
+                            onPressed: () => _finishOnboarding(),
                             child: Text(
                               'Already have an account? Sign In',
                               style: TextStyle(

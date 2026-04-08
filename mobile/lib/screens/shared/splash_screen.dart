@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/theme.dart';
 import '../../services/supabase_service.dart';
 
@@ -72,11 +74,41 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(const Duration(milliseconds: 2800));
     if (!mounted) return;
     try {
+      // Wait for Supabase to restore session from storage
       final session = SupabaseService.auth.currentSession;
       if (session != null) {
         if (mounted) context.go('/consumer');
+        return;
+      }
+
+      // Session might not be restored yet — listen for auth state
+      final completer = Completer<bool>();
+      final subscription = SupabaseService.auth.onAuthStateChange.listen((data) {
+        if (!completer.isCompleted) {
+          completer.complete(data.session != null);
+        }
+      });
+
+      // Wait up to 2 seconds for session restore
+      final isLoggedIn = await completer.future.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => false,
+      );
+      subscription.cancel();
+
+      if (!mounted) return;
+      if (isLoggedIn) {
+        context.go('/consumer');
       } else {
-        if (mounted) context.go('/onboarding');
+        // Check shared preferences if user has completed onboarding
+        final prefs = await SharedPreferences.getInstance();
+        final hasOnboarded = prefs.getBool('has_onboarded') ?? false;
+        if (!mounted) return;
+        if (hasOnboarded) {
+          context.go('/auth/login');
+        } else {
+          context.go('/onboarding');
+        }
       }
     } catch (e) {
       debugPrint('Splash navigation error: $e');
