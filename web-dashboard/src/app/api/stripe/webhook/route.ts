@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
           "Payment failed for customer:",
           invoice.customer,
           "Subscription:",
-          invoice.subscription
+          (invoice as any).subscription
         );
         break;
       }
