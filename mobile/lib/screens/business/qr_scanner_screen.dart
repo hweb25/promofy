@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../config/theme.dart';
 import '../../providers/business_provider.dart';
@@ -25,6 +28,7 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
     final barcode = capture.barcodes.firstOrNull;
     if (barcode == null || barcode.rawValue == null) return;
 
+    HapticFeedback.selectionClick();
     setState(() => _isProcessing = true);
     _controller.stop();
 
@@ -48,21 +52,27 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
         businessId: business.id,
       );
 
-      setState(() {
-        _result = _ScanResult(
-          success: result['success'] == true,
-          message: result['success'] == true
-              ? 'Offer redeemed successfully!'
-              : result['error'] ?? 'Validation failed',
-        );
-      });
-    } catch (e) {
-      setState(() {
-        _result = _ScanResult(success: false, message: 'Error: $e');
-      });
-    } finally {
-      setState(() => _isProcessing = false);
+      _finish(
+        result['success'] == true,
+        result['success'] == true
+            ? 'Offer redeemed successfully!'
+            : result['error']?.toString() ??
+                'This code is not valid or has already been used.',
+      );
+    } catch (_) {
+      _finish(false, "Couldn't validate this code. Please try again.");
     }
+  }
+
+  // Centralizes the result + a confirming haptic so success/failure are felt,
+  // not just seen — the redemption is the owner's peak moment.
+  void _finish(bool success, String message) {
+    HapticFeedback.heavyImpact();
+    if (!mounted) return;
+    setState(() {
+      _result = _ScanResult(success: success, message: message);
+      _isProcessing = false;
+    });
   }
 
   void _resetScanner() {
@@ -159,51 +169,94 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
 
   Widget _buildResult() {
     final success = _result!.success;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: (success ? AppTheme.successColor : AppTheme.errorColor).withOpacity(0.1),
-                shape: BoxShape.circle,
+    final color = success ? AppTheme.successColor : AppTheme.errorColor;
+    return Container(
+      color: AppTheme.backgroundColor,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            children: [
+              const Spacer(),
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: success
+                        ? const [AppTheme.secondaryColor, AppTheme.successColor]
+                        : const [AppTheme.accentColor, AppTheme.errorColor],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.45),
+                      blurRadius: 40,
+                      spreadRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  success ? Icons.check_rounded : Icons.close_rounded,
+                  size: 72,
+                  color: Colors.white,
+                ),
+              )
+                  .animate()
+                  .scale(
+                    begin: const Offset(0.3, 0.3),
+                    end: const Offset(1, 1),
+                    duration: 600.ms,
+                    curve: Curves.elasticOut,
+                  )
+                  .fadeIn(duration: 250.ms),
+              const SizedBox(height: 28),
+              Text(
+                success ? 'Redeemed!' : "Couldn't redeem",
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  color: success ? AppTheme.textPrimary : AppTheme.errorColor,
+                ),
+              )
+                  .animate()
+                  .fadeIn(delay: 200.ms, duration: 400.ms)
+                  .slideY(begin: 0.3, end: 0, delay: 200.ms, duration: 400.ms),
+              const SizedBox(height: 10),
+              Text(
+                _result!.message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 15,
+                  color: AppTheme.textSecondary,
+                  height: 1.4,
+                ),
+              ).animate().fadeIn(delay: 320.ms, duration: 400.ms),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: _resetScanner,
+                  icon: const Icon(Icons.qr_code_scanner_rounded),
+                  label: const Text('Scan another'),
+                ),
               ),
-              child: Icon(
-                success ? Icons.check_circle : Icons.cancel,
-                size: 80,
-                color: success ? AppTheme.successColor : AppTheme.errorColor,
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: TextButton(
+                  onPressed: () => context.go('/business'),
+                  child: const Text('Back to dashboard'),
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              success ? 'Success!' : 'Failed',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: success ? AppTheme.successColor : AppTheme.errorColor,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _result!.message,
-              style: const TextStyle(fontSize: 16, color: AppTheme.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton.icon(
-                onPressed: _resetScanner,
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('Scan Another'),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -260,18 +313,15 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
       final service = PromotionService();
       final result = await service.validateRedemption(code: code, businessId: business.id);
 
-      setState(() {
-        _result = _ScanResult(
-          success: result['success'] == true,
-          message: result['success'] == true ? 'Offer redeemed successfully!' : result['error'] ?? 'Validation failed',
-        );
-        _isProcessing = false;
-      });
-    } catch (e) {
-      setState(() {
-        _result = _ScanResult(success: false, message: 'Error: $e');
-        _isProcessing = false;
-      });
+      _finish(
+        result['success'] == true,
+        result['success'] == true
+            ? 'Offer redeemed successfully!'
+            : result['error']?.toString() ??
+                'This code is not valid or has already been used.',
+      );
+    } catch (_) {
+      _finish(false, "Couldn't validate this code. Please try again.");
     }
   }
 }

@@ -41,7 +41,17 @@ class SubscriptionScreen extends ConsumerWidget {
               ],
               isCurrentPlan: currentTier == 'free',
               color: AppTheme.textSecondary,
-              onSelect: () {},
+              onSelect: () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('To switch to Basic, contact support.',
+                      style: TextStyle(
+                          fontFamily: 'Poppins', fontWeight: FontWeight.w500)),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                ),
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -158,15 +168,20 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isCurrentPlan ? color : AppTheme.dividerColor,
           width: isCurrentPlan ? 2 : 1,
         ),
         boxShadow: isPopular
-            ? [BoxShadow(color: color.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 8))]
-            : null,
+            ? [
+                BoxShadow(
+                    color: color.withOpacity(0.25),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10))
+              ]
+            : AppTheme.softShadow,
       ),
       child: Column(
         children: [
@@ -269,7 +284,7 @@ class _FaqItemState extends State<_FaqItem> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FA),
+          color: AppTheme.inputFill,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

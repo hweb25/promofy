@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../providers/business_provider.dart';
 import '../../providers/promotion_provider.dart';
+import '../../widgets/effects.dart';
 
 class CreatePromotionScreen extends ConsumerStatefulWidget {
   const CreatePromotionScreen({super.key});
@@ -44,8 +46,12 @@ class _CreatePromotionScreenState extends ConsumerState<CreatePromotionScreen> {
   }
 
   Future<void> _createPromotion() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      HapticFeedback.selectionClick();
+      return;
+    }
 
+    HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
 
     try {
@@ -70,15 +76,38 @@ class _CreatePromotionScreenState extends ConsumerState<CreatePromotionScreen> {
       });
 
       if (mounted) {
+        HapticFeedback.heavyImpact();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Promotion created!'), backgroundColor: AppTheme.successColor),
+          SnackBar(
+            content: const Text('🎉 Promotion published!',
+                style: TextStyle(
+                    fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          ),
         );
         ref.invalidate(businessPromotionsProvider(business.id));
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        HapticFeedback.heavyImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+                "Couldn't create promotion. Please try again.",
+                style: TextStyle(
+                    fontFamily: 'Poppins', fontWeight: FontWeight.w500)),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -253,22 +282,58 @@ class _CreatePromotionScreenState extends ConsumerState<CreatePromotionScreen> {
                 ),
                 onChanged: (v) => _maxRedemptions = int.tryParse(v),
               ),
-              const SizedBox(height: 40),
-
-              // Submit
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _createPromotion,
-                  icon: _isLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.rocket_launch),
-                  label: Text(_isLoading ? 'Publishing...' : 'Publish Promotion'),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+      // Primary action pinned in the thumb zone.
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: AppTheme.navShadow,
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: _isLoading ? null : AppTheme.primaryGradient,
+                color:
+                    _isLoading ? AppTheme.primaryColor.withOpacity(0.4) : null,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: _isLoading ? [] : AppTheme.floatingShadow,
+              ),
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : _createPromotion,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                ),
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.5, color: Colors.white))
+                    : const Icon(Icons.rocket_launch_rounded,
+                        color: Colors.white),
+                label: Text(
+                  _isLoading ? 'Publishing…' : 'Publish promotion',
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(height: 40),
-            ],
+            ),
           ),
         ),
       ),
@@ -294,20 +359,35 @@ class _DateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F2F6),
+          color: AppTheme.inputFill,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-            const SizedBox(height: 4),
-            Text(DateFormat('MMM dd, yyyy').format(date), style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(label,
+                style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    color: AppTheme.textSecondary)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today_rounded,
+                    size: 14, color: AppTheme.primaryColor),
+                const SizedBox(width: 6),
+                Text(DateFormat('MMM dd, yyyy').format(date),
+                    style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary)),
+              ],
+            ),
           ],
         ),
       ),
@@ -323,20 +403,35 @@ class _TimeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F2F6),
+          color: AppTheme.inputFill,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-            const SizedBox(height: 4),
-            Text(time.format(context), style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(label,
+                style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    color: AppTheme.textSecondary)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.access_time_rounded,
+                    size: 14, color: AppTheme.primaryColor),
+                const SizedBox(width: 6),
+                Text(time.format(context),
+                    style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary)),
+              ],
+            ),
           ],
         ),
       ),

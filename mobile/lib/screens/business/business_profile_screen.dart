@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/business_provider.dart';
+import '../../widgets/effects.dart';
 
 class BusinessProfileScreen extends ConsumerStatefulWidget {
   const BusinessProfileScreen({super.key});
@@ -43,8 +45,12 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      HapticFeedback.selectionClick();
+      return;
+    }
 
+    HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
 
     try {
@@ -71,13 +77,35 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
       ref.invalidate(myBusinessProvider);
 
       if (mounted) {
+        HapticFeedback.heavyImpact();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Business saved!'), backgroundColor: AppTheme.successColor),
+          SnackBar(
+            content: const Text('✅ Business saved',
+                style: TextStyle(
+                    fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        HapticFeedback.heavyImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Couldn't save. Please try again.",
+                style: TextStyle(
+                    fontFamily: 'Poppins', fontWeight: FontWeight.w500)),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -210,17 +238,19 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
 
               if (_isExisting) ...[
                 // Subscription info
-                GestureDetector(
+                PressableScale(
                   onTap: () => context.push('/business/subscription'),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppTheme.dividerColor),
+                      color: AppTheme.surfaceColor,
                       borderRadius: BorderRadius.circular(16),
+                      boxShadow: AppTheme.softShadow,
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.workspace_premium, color: AppTheme.secondaryColor),
+                        const Icon(Icons.workspace_premium_rounded,
+                            color: AppTheme.secondaryColor),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Column(
@@ -239,18 +269,56 @@ class _BusinessProfileScreenState extends ConsumerState<BusinessProfileScreen> {
                 const SizedBox(height: 16),
               ],
 
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _save,
-                  child: _isLoading
-                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(_isExisting ? 'Save Changes' : 'Create Business'),
-                ),
-              ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 8),
             ],
+          ),
+        ),
+      ),
+      // Primary action pinned in the thumb zone.
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: AppTheme.navShadow,
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: _isLoading ? null : AppTheme.primaryGradient,
+                color:
+                    _isLoading ? AppTheme.primaryColor.withOpacity(0.4) : null,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: _isLoading ? [] : AppTheme.floatingShadow,
+              ),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.5, color: Colors.white))
+                    : Text(
+                        _isExisting ? 'Save changes' : 'Create business',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
           ),
         ),
       ),

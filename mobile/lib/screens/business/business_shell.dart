@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
+import '../../widgets/effects.dart';
 
 class BusinessShell extends StatelessWidget {
   final Widget child;
@@ -8,18 +10,14 @@ class BusinessShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
+
     return Scaffold(
       body: child,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
+          color: AppTheme.surfaceColor,
+          boxShadow: AppTheme.navShadow,
         ),
         child: SafeArea(
           child: Padding(
@@ -30,26 +28,26 @@ class BusinessShell extends StatelessWidget {
                 _NavItem(
                   icon: Icons.dashboard_rounded,
                   label: 'Dashboard',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/business',
+                  isSelected: location == '/business',
                   onTap: () => context.go('/business'),
                 ),
                 _NavItem(
                   icon: Icons.bar_chart_rounded,
                   label: 'Analytics',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/business/analytics',
+                  isSelected: location == '/business/analytics',
                   onTap: () => context.go('/business/analytics'),
                 ),
                 _NavItem(
                   icon: Icons.qr_code_scanner_rounded,
-                  label: 'Scanner',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/business/scanner',
+                  label: 'Scan',
+                  isSelected: location == '/business/scanner',
                   onTap: () => context.go('/business/scanner'),
                   isHighlighted: true,
                 ),
                 _NavItem(
                   icon: Icons.store_rounded,
                   label: 'Profile',
-                  isSelected: GoRouterState.of(context).matchedLocation == '/business/profile',
+                  isSelected: location == '/business/profile',
                   onTap: () => context.go('/business/profile'),
                 ),
               ],
@@ -78,44 +76,52 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The Scan action is the business owner's most frequent task, so it gets a
+    // raised, gradient "FAB-style" treatment in the centre of the bar.
     if (isHighlighted) {
-      return GestureDetector(
-        onTap: onTap,
+      return PressableScale(
+        haptic: false,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
         child: Container(
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor,
+            gradient: AppTheme.primaryGradient,
             borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: AppTheme.primaryColor.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            boxShadow: AppTheme.floatingShadow,
           ),
           child: Icon(icon, color: Colors.white, size: 28),
         ),
       );
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+    final color = isSelected ? AppTheme.primaryColor : AppTheme.textLight;
+    return PressableScale(
+      haptic: false,
+      onTap: () {
+        if (!isSelected) HapticFeedback.selectionClick();
+        onTap();
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: isSelected ? AppTheme.primaryColor : AppTheme.textLight, size: 24),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: Icon(icon, key: ValueKey(isSelected), color: color, size: 24),
+            ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
+                fontFamily: 'Poppins',
                 fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? AppTheme.primaryColor : AppTheme.textLight,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: color,
               ),
             ),
           ],
