@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../config/theme.dart';
 import '../../providers/promotion_provider.dart';
 import '../../models/promotion.dart';
+import '../../widgets/effects.dart';
 
 class PromotionDetailScreen extends ConsumerStatefulWidget {
   final String promotionId;
@@ -22,12 +26,14 @@ class _PromotionDetailScreenState
   bool _isClaiming = false;
 
   Future<void> _claimOffer() async {
+    HapticFeedback.mediumImpact();
     setState(() => _isClaiming = true);
     try {
       final service = ref.read(promotionServiceProvider);
       final result = await service.claimPromotion(widget.promotionId);
 
       if (result['success'] == true && mounted) {
+        HapticFeedback.heavyImpact();
         context.push('/consumer/redemption/${result['redemption_id']}');
       } else if (mounted) {
         _showSnack(result['error'] ?? 'Failed to claim offer',
@@ -64,22 +70,44 @@ class _PromotionDetailScreenState
       backgroundColor: AppTheme.backgroundColor,
       body: promoAsync.when(
         data: (promo) => _buildContent(promo),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline_rounded,
-                  size: 52, color: AppTheme.errorColor),
-              const SizedBox(height: 12),
-              Text('Could not load deal', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => ref.invalidate(
-                    promotionDetailProvider(widget.promotionId)),
-                child: const Text('Retry'),
+        loading: () => const _DetailSkeleton(),
+        error: (e, _) => SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      size: 52, color: AppTheme.errorColor),
+                  const SizedBox(height: 12),
+                  Text('This deal slipped away',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Check your connection and try again — your deals are waiting.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () => ref.invalidate(
+                        promotionDetailProvider(widget.promotionId)),
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Try again'),
+                  ),
+                  TextButton(
+                    onPressed: () => context.pop(),
+                    child: const Text('Go back'),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -118,10 +146,15 @@ class _PromotionDetailScreenState
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: GestureDetector(
-                onTap: () {},
+                onTap: () => Share.share(
+                  'Check out this deal: ${promo.title} at '
+                  '${promo.businessName ?? 'a local spot'} on Promofy — '
+                  '${promo.discountLabel}!',
+                  subject: promo.title,
+                ),
                 child: Container(
-                  width: 38,
-                  height: 38,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(12),
@@ -192,6 +225,35 @@ class _PromotionDetailScreenState
                           ),
                         ),
                       ),
+                      if (promo.originalPriceLabel != null) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            if (promo.discountedPriceLabel != null) ...[
+                              Text(
+                                promo.discountedPriceLabel!,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Text(
+                              promo.originalPriceLabel!,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 15,
+                                color: Colors.white.withOpacity(0.8),
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -297,18 +359,42 @@ class _PromotionDetailScreenState
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
+                            if (promo.currentRedemptions > 0) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Icon(
+                                      Icons.local_fire_department_rounded,
+                                      size: 13,
+                                      color: AppTheme.accentColor),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${promo.currentRedemptions} people claimed this',
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
+                      PressableScale(
+                        onTap: () => context.go('/consumer/map'),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.directions_walk_rounded,
+                              size: 18, color: AppTheme.primaryColor),
                         ),
-                        child: const Icon(Icons.directions_walk_rounded,
-                            size: 18, color: AppTheme.primaryColor),
                       ),
                     ],
                   ),
@@ -368,11 +454,18 @@ class _PromotionDetailScreenState
                         ),
                       if (promo.maxTotalRedemptions != null)
                         _DetailTile(
-                          icon: Icons.group_rounded,
-                          iconColor: AppTheme.successColor,
+                          icon: promo.isLowStock
+                              ? Icons.local_fire_department_rounded
+                              : Icons.group_rounded,
+                          iconColor: promo.isLowStock
+                              ? AppTheme.accentColor
+                              : AppTheme.successColor,
                           label: 'Remaining',
-                          value:
-                              '${promo.maxTotalRedemptions! - promo.currentRedemptions} of ${promo.maxTotalRedemptions} left',
+                          value: promo.isLowStock
+                              ? 'Only ${promo.remainingRedemptions} left!'
+                              : '${promo.remainingRedemptions} of ${promo.maxTotalRedemptions} left',
+                          valueColor:
+                              promo.isLowStock ? AppTheme.accentColor : null,
                         ),
                       _DetailTile(
                         icon: Icons.repeat_rounded,
@@ -457,6 +550,7 @@ class _DetailTile extends StatelessWidget {
   final Color iconColor;
   final String label;
   final String value;
+  final Color? valueColor;
   final bool isFirst;
   final bool isLast;
 
@@ -465,6 +559,7 @@ class _DetailTile extends StatelessWidget {
     required this.iconColor,
     required this.label,
     required this.value,
+    this.valueColor,
     this.isFirst = false,
     this.isLast = false,
   });
@@ -498,11 +593,11 @@ class _DetailTile extends StatelessWidget {
               const Spacer(),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary,
+                  color: valueColor ?? AppTheme.textPrimary,
                 ),
               ),
             ],
@@ -626,6 +721,51 @@ class _ClaimBar extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Loading skeleton (mirrors the real layout so there's no pop-in) ───────────
+class _DetailSkeleton extends StatelessWidget {
+  const _DetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget block(double h, {double? w, double r = 16}) => Container(
+          height: h,
+          width: w,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(r),
+          ),
+        );
+
+    return Shimmer.fromColors(
+      baseColor: const Color(0xFFE8E4F7),
+      highlightColor: Colors.white,
+      child: ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          block(280, r: 0),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                block(26, w: 220),
+                const SizedBox(height: 16),
+                block(76),
+                const SizedBox(height: 20),
+                block(14, w: double.infinity),
+                const SizedBox(height: 8),
+                block(14, w: 240),
+                const SizedBox(height: 24),
+                block(180),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

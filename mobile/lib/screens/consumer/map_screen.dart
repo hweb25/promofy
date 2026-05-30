@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../providers/promotion_provider.dart';
 import '../../models/promotion.dart';
+import '../../widgets/effects.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -100,11 +101,36 @@ class _MapScreenState extends ConsumerState<MapScreen>
                 onTap: (_) => setState(() => _selectedPromotion = null),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(
+                child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor)),
             error: (e, _) => Center(
-              child: Text(
-                'Error loading map: $e',
-                style: const TextStyle(fontFamily: 'Poppins'),
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.cloud_off_rounded,
+                        size: 48, color: AppTheme.textLight),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Couldn't load nearby deals",
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    ElevatedButton.icon(
+                      onPressed: () =>
+                          ref.invalidate(nearbyPromotionsProvider),
+                      icon: const Icon(Icons.refresh_rounded, size: 18),
+                      label: const Text('Try again'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -161,8 +187,9 @@ class _MapScreenState extends ConsumerState<MapScreen>
                       final isSelected = cat == _selectedCategory;
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
+                        child: PressableScale(
                           onTap: () => setState(() => _selectedCategory = cat),
+                          pressedScale: 0.94,
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(
@@ -296,40 +323,115 @@ class _MapScreenState extends ConsumerState<MapScreen>
 
                     Expanded(
                       child: nearbyPromos.when(
-                        data: (promos) => ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          itemCount: promos.length,
-                          itemBuilder: (context, index) {
-                            final promo = promos[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _BottomSheetPromoTile(
-                                promotion: promo,
-                                onTap: () => context.push(
-                                    '/consumer/promotion/${promo.id}'),
-                                onMapTap: () {
-                                  if (promo.latitude != null &&
-                                      promo.longitude != null) {
-                                    _mapController?.animateCamera(
-                                      CameraUpdate.newLatLngZoom(
-                                        LatLng(promo.latitude!, promo.longitude!),
-                                        16,
+                        data: (promos) {
+                          if (promos.isEmpty) {
+                            return Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.08),
+                                        shape: BoxShape.circle,
                                       ),
-                                    );
-                                    setState(() => _selectedPromotion = promo);
-                                  }
-                                },
+                                      child: const Icon(
+                                          Icons.location_off_rounded,
+                                          size: 30,
+                                          color: AppTheme.primaryColor),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    const Text(
+                                      'No deals nearby',
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppTheme.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    const Text(
+                                      'Try moving the map or widening your search.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 12,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
-                          },
-                        ),
+                          }
+                          return ListView.builder(
+                            controller: scrollController,
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            itemCount: promos.length,
+                            itemBuilder: (context, index) {
+                              final promo = promos[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _BottomSheetPromoTile(
+                                  promotion: promo,
+                                  onTap: () => context.push(
+                                      '/consumer/promotion/${promo.id}'),
+                                  onMapTap: () {
+                                    if (promo.latitude != null &&
+                                        promo.longitude != null) {
+                                      _mapController?.animateCamera(
+                                        CameraUpdate.newLatLngZoom(
+                                          LatLng(promo.latitude!,
+                                              promo.longitude!),
+                                          16,
+                                        ),
+                                      );
+                                      setState(
+                                          () => _selectedPromotion = promo);
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          );
+                        },
                         loading: () => const Center(
-                          child: CircularProgressIndicator(),
+                          child: CircularProgressIndicator(
+                              color: AppTheme.primaryColor),
                         ),
                         error: (e, _) => Center(
-                          child: Text('Error: $e',
-                              style: const TextStyle(fontFamily: 'Poppins')),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.cloud_off_rounded,
+                                    size: 40, color: AppTheme.textLight),
+                                const SizedBox(height: 10),
+                                const Text(
+                                  "Couldn't load deals",
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                TextButton(
+                                  onPressed: () => ref
+                                      .invalidate(nearbyPromotionsProvider),
+                                  child: const Text('Try again'),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -371,7 +473,7 @@ class _PromotionMapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
@@ -387,7 +489,7 @@ class _PromotionMapCard extends StatelessWidget {
               width: 58,
               height: 58,
               decoration: BoxDecoration(
-                gradient: AppTheme.primaryGradient,
+                gradient: AppTheme.accentGradient,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
@@ -483,7 +585,7 @@ class _BottomSheetPromoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = AppTheme.categoryColor(promotion.businessCategory ?? '');
 
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

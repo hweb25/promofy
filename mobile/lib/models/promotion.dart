@@ -120,4 +120,66 @@ class Promotion {
     final now = DateTime.now();
     return status == 'active' && now.isAfter(startsAt) && now.isBefore(endsAt);
   }
+
+  // ── Value & scarcity helpers ────────────────────────────────────────────────
+  // Centralized so savings/scarcity read identically on every screen.
+
+  static String _money(double v) =>
+      v == v.roundToDouble() ? '\$${v.round()}' : '\$${v.toStringAsFixed(2)}';
+
+  /// The post-discount price, when an [originalPrice] and a computable discount
+  /// are available. Null for discount types we can't price (e.g. bogo).
+  double? get discountedPrice {
+    final orig = originalPrice;
+    if (orig == null) return null;
+    switch (discountType) {
+      case 'percentage':
+        if (discountValue == null) return null;
+        return orig * (1 - discountValue! / 100);
+      case 'fixed':
+        if (discountValue == null) return null;
+        final d = orig - discountValue!;
+        return d < 0 ? 0 : d;
+      case 'free_item':
+        return 0;
+      default:
+        return null;
+    }
+  }
+
+  /// Absolute amount saved versus [originalPrice], if computable and positive.
+  double? get savedAmount {
+    final orig = originalPrice;
+    final disc = discountedPrice;
+    if (orig == null || disc == null) return null;
+    final saved = orig - disc;
+    return saved > 0 ? saved : null;
+  }
+
+  String? get originalPriceLabel =>
+      originalPrice == null ? null : _money(originalPrice!);
+
+  String? get discountedPriceLabel {
+    final d = discountedPrice;
+    return d == null ? null : _money(d);
+  }
+
+  String? get savedAmountLabel {
+    final s = savedAmount;
+    return s == null ? null : _money(s);
+  }
+
+  /// Redemptions still available, when a total cap is set.
+  int? get remainingRedemptions => maxTotalRedemptions == null
+      ? null
+      : (maxTotalRedemptions! - currentRedemptions);
+
+  /// True when stock is scarce enough to warrant an urgency nudge.
+  bool get isLowStock {
+    final r = remainingRedemptions;
+    if (r == null) return false;
+    return r > 0 &&
+        (r <= 10 ||
+            (maxTotalRedemptions! > 0 && r / maxTotalRedemptions! <= 0.2));
+  }
 }

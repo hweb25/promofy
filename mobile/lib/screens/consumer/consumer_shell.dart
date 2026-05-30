@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 
@@ -68,7 +69,10 @@ class _FloatingNavBar extends StatelessWidget {
               return _NavItemWidget(
                 item: item,
                 isSelected: isSelected,
-                onTap: () => context.go(item.route),
+                onTap: () {
+                  if (!isSelected) HapticFeedback.selectionClick();
+                  context.go(item.route);
+                },
               );
             }).toList(),
           ),

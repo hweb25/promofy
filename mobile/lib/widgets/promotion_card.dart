@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../config/theme.dart';
 import '../models/promotion.dart';
+import 'effects.dart';
 
 class PromotionCard extends StatelessWidget {
   final Promotion promotion;
@@ -34,7 +36,7 @@ class _FullCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = AppTheme.categoryColor(promotion.businessCategory ?? '');
 
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -105,7 +107,7 @@ class _FullCard extends StatelessWidget {
                           fontFamily: 'Poppins',
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                          fontSize: 13,
+                          fontSize: 15,
                         ),
                       ),
                     ),
@@ -225,6 +227,7 @@ class _FullCard extends StatelessWidget {
                             ],
                           ],
                         ),
+                        _MetaRow(promotion: promotion),
                       ],
                     ),
                   ),
@@ -261,7 +264,7 @@ class _CompactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = AppTheme.categoryColor(promotion.businessCategory ?? '');
 
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -319,10 +322,17 @@ class _CompactCard extends StatelessWidget {
                           fontFamily: 'Poppins',
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                          fontSize: 11,
+                          fontSize: 12,
                         ),
                       ),
                     ),
+                  ),
+
+                  // Live expiry urgency (consistent with the full card)
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: _TimerBadge(endsAt: promotion.endsAt),
                   ),
                 ],
               ),
@@ -423,16 +433,37 @@ class _TimerBadge extends StatefulWidget {
 
 class _TimerBadgeState extends State<_TimerBadge> {
   late Duration _remaining;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _updateRemaining();
+    _scheduleTick();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   void _updateRemaining() {
     final now = DateTime.now();
     _remaining = widget.endsAt.difference(now);
+  }
+
+  // Self-rescheduling tick: every second in the final hour (so minutes visibly
+  // count down), every 30s otherwise, and it stops once the deal has expired.
+  void _scheduleTick() {
+    _timer?.cancel();
+    if (_remaining.isNegative) return;
+    final secs = _remaining.inMinutes < 60 ? 1 : 30;
+    _timer = Timer(Duration(seconds: secs), () {
+      if (!mounted) return;
+      setState(_updateRemaining);
+      _scheduleTick();
+    });
   }
 
   String get _label {
@@ -474,6 +505,94 @@ class _TimerBadgeState extends State<_TimerBadge> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Meta row: savings + social-proof/scarcity ─────────────────────────────────
+// Surfaces the trust signals the data model already carries (price, redemptions)
+// but the card previously hid. Renders nothing when there is no data to show.
+class _MetaRow extends StatelessWidget {
+  final Promotion promotion;
+  const _MetaRow({required this.promotion});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPrice = promotion.discountedPriceLabel != null &&
+        promotion.originalPriceLabel != null;
+    final lowStock = promotion.isLowStock;
+    final claimed = promotion.currentRedemptions;
+    final hasSocial = lowStock || claimed > 0;
+
+    if (!hasPrice && !hasSocial) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          if (hasPrice) ...[
+            Text(
+              promotion.discountedPriceLabel!,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              promotion.originalPriceLabel!,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                color: AppTheme.textLight,
+                decoration: TextDecoration.lineThrough,
+              ),
+            ),
+          ],
+          const Spacer(),
+          if (lowStock)
+            _MetaChip(
+              icon: Icons.local_fire_department_rounded,
+              label: 'Only ${promotion.remainingRedemptions} left',
+              color: AppTheme.accentColor,
+            )
+          else if (claimed > 0)
+            _MetaChip(
+              icon: Icons.people_alt_rounded,
+              label: '$claimed claimed',
+              color: AppTheme.textSecondary,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _MetaChip({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: color),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

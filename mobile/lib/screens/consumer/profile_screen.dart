@@ -2,9 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/promotion_provider.dart';
+
+void _comingSoon(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: const Text('Coming soon ✨',
+          style:
+              TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w500)),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+    ),
+  );
+}
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -19,6 +34,9 @@ class ProfileScreen extends ConsumerWidget {
     final claimedCount = redemptions.valueOrNull?.length ?? 0;
     final redeemedCount =
         redemptions.valueOrNull?.where((r) => r.isRedeemed).length ?? 0;
+    final activeCount =
+        redemptions.valueOrNull?.where((r) => r.canRedeem).length ?? 0;
+    final statsLoading = redemptions.isLoading;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -49,7 +67,7 @@ class ProfileScreen extends ConsumerWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: AppTheme.primaryDark.withOpacity(0.35),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                           ),
@@ -104,9 +122,10 @@ class ProfileScreen extends ConsumerWidget {
                       child: Row(
                         children: [
                           _StatPill(
-                            value: '$claimedCount',
+                            value: claimedCount,
                             label: 'Claimed',
                             icon: Icons.local_offer_rounded,
+                            loading: statsLoading,
                           ),
                           Container(
                             width: 1,
@@ -114,9 +133,10 @@ class ProfileScreen extends ConsumerWidget {
                             color: Colors.white.withOpacity(0.3),
                           ),
                           _StatPill(
-                            value: '$redeemedCount',
+                            value: redeemedCount,
                             label: 'Redeemed',
                             icon: Icons.check_circle_rounded,
+                            loading: statsLoading,
                           ),
                           Container(
                             width: 1,
@@ -124,9 +144,10 @@ class ProfileScreen extends ConsumerWidget {
                             color: Colors.white.withOpacity(0.3),
                           ),
                           _StatPill(
-                            value: '${claimedCount - redeemedCount}',
-                            label: 'Saved',
-                            icon: Icons.bookmark_rounded,
+                            value: activeCount,
+                            label: 'Active',
+                            icon: Icons.bolt_rounded,
+                            loading: statsLoading,
                           ),
                         ],
                       ),
@@ -163,21 +184,21 @@ class ProfileScreen extends ConsumerWidget {
                   label: 'My Redemptions',
                   iconColor: AppTheme.primaryColor,
                   iconBg: AppTheme.primaryColor.withOpacity(0.1),
-                  onTap: () {},
+                  onTap: () => _comingSoon(context),
                 ),
                 _MenuItemData(
                   icon: Icons.favorite_rounded,
                   label: 'Favorites',
                   iconColor: AppTheme.errorColor,
                   iconBg: AppTheme.errorColor.withOpacity(0.1),
-                  onTap: () {},
+                  onTap: () => _comingSoon(context),
                 ),
                 _MenuItemData(
                   icon: Icons.card_giftcard_rounded,
                   label: 'Referral Program',
                   iconColor: AppTheme.warningColor,
                   iconBg: AppTheme.warningColor.withOpacity(0.1),
-                  onTap: () {},
+                  onTap: () => _comingSoon(context),
                   badge: 'NEW',
                 ),
               ],
@@ -206,14 +227,14 @@ class ProfileScreen extends ConsumerWidget {
                   label: 'Notifications',
                   iconColor: AppTheme.infoColor,
                   iconBg: AppTheme.infoColor.withOpacity(0.1),
-                  onTap: () {},
+                  onTap: () => _comingSoon(context),
                 ),
                 _MenuItemData(
                   icon: Icons.language_rounded,
                   label: 'Language',
                   iconColor: const Color(0xFF059669),
                   iconBg: const Color(0xFF059669).withOpacity(0.1),
-                  onTap: () {},
+                  onTap: () => _comingSoon(context),
                 ),
                 _MenuItemData(
                   icon: Icons.storefront_rounded,
@@ -248,14 +269,14 @@ class ProfileScreen extends ConsumerWidget {
                   label: 'Help & Support',
                   iconColor: const Color(0xFF7C3AED),
                   iconBg: const Color(0xFF7C3AED).withOpacity(0.1),
-                  onTap: () {},
+                  onTap: () => _comingSoon(context),
                 ),
                 _MenuItemData(
                   icon: Icons.info_rounded,
                   label: 'About Promofy',
                   iconColor: AppTheme.textSecondary,
                   iconBg: AppTheme.textSecondary.withOpacity(0.08),
-                  onTap: () {},
+                  onTap: () => _comingSoon(context),
                 ),
               ],
             ),
@@ -307,14 +328,16 @@ class ProfileScreen extends ConsumerWidget {
 
 // ── Stat pill ─────────────────────────────────────────────────────────────────
 class _StatPill extends StatelessWidget {
-  final String value;
+  final int value;
   final String label;
   final IconData icon;
+  final bool loading;
 
   const _StatPill({
     required this.value,
     required this.label,
     required this.icon,
+    this.loading = false,
   });
 
   @override
@@ -322,15 +345,34 @@ class _StatPill extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+          if (loading)
+            Shimmer.fromColors(
+              baseColor: Colors.white.withOpacity(0.35),
+              highlightColor: Colors.white.withOpacity(0.7),
+              child: Container(
+                width: 30,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            )
+          else
+            TweenAnimationBuilder<int>(
+              tween: IntTween(begin: 0, end: value),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (context, v, _) => Text(
+                '$v',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
           const SizedBox(height: 2),
           Text(
             label,

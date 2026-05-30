@@ -25,6 +25,8 @@ android {
 
     defaultConfig {
         applicationId = "com.promofy.app"
+        // Firebase BoM 33.x requires API 23+; keep this explicit so the
+        // manifest merge doesn't fail on the default flutter.minSdkVersion.
         minSdk = 23
         targetSdk = 34
         versionCode = flutter.versionCode

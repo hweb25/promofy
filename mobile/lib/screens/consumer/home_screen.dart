@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
+import '../../models/promotion.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/promotion_provider.dart';
 import '../../widgets/promotion_card.dart';
+import '../../widgets/effects.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -33,6 +36,26 @@ class HomeScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: _SearchBar(),
+            ),
+          ),
+
+          // ── Featured Deal (the screen's focal point) ─────────────────────
+          SliverToBoxAdapter(
+            child: Builder(
+              builder: (context) {
+                final promos = nearbyPromos.valueOrNull;
+                if (promos == null || promos.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: _FeaturedDeal(
+                    promotion: promos.first,
+                    onTap: () => context
+                        .push('/consumer/promotion/${promos.first.id}'),
+                  ),
+                );
+              },
             ),
           ),
 
@@ -115,14 +138,20 @@ class HomeScreen extends ConsumerWidget {
             child: nearbyPromos.when(
               data: (promos) {
                 if (promos.isEmpty) return const SizedBox.shrink();
+                // Skip the deal already shown in the Featured hero so it isn't
+                // duplicated immediately below it.
+                final nearList =
+                    (promos.length > 1 ? promos.skip(1) : promos)
+                        .take(6)
+                        .toList();
                 return SizedBox(
                   height: 220,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: promos.take(6).length,
+                    itemCount: nearList.length,
                     itemBuilder: (context, index) {
-                      final promo = promos[index];
+                      final promo = nearList[index];
                       return Padding(
                         padding: const EdgeInsets.only(right: 14),
                         child: SizedBox(
@@ -195,12 +224,17 @@ class HomeScreen extends ConsumerWidget {
                   child: _EmptyDeals(),
                 );
               }
+              // Honest "Popular" ordering: most-claimed first (the label implied
+              // a ranking the raw nearby list didn't actually have).
+              final popular = [...promos]
+                ..sort((a, b) =>
+                    b.currentRedemptions.compareTo(a.currentRedemptions));
               return SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final promo = promos[index];
+                      final promo = popular[index];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 16),
                         child: PromotionCard(
@@ -222,7 +256,7 @@ class HomeScreen extends ConsumerWidget {
                             curve: Curves.easeOut,
                           );
                     },
-                    childCount: promos.length,
+                    childCount: popular.length,
                   ),
                 ),
               );
@@ -321,16 +355,32 @@ class _HomeHeader extends ConsumerWidget {
                   ),
 
                   // Notification bell
-                  Container(
-                    width: 44,
-                    height: 44,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(14),
+                  GestureDetector(
+                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          "You're all caught up — no new notifications",
+                          style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontWeight: FontWeight.w500),
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      ),
                     ),
-                    child: const Icon(Icons.notifications_outlined,
-                        color: Colors.white, size: 22),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.notifications_outlined,
+                          color: Colors.white, size: 22),
+                    ),
                   ),
 
                   // Avatar
@@ -445,33 +495,41 @@ class _CategoryIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withOpacity(0.2), width: 1.5),
-            ),
-            child: Icon(icon, color: color, size: 26),
+      child: PressableScale(
+        onTap: () => context.push('/consumer/promotions'),
+        pressedScale: 0.92,
+        child: Semantics(
+          button: true,
+          label: label,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+                ),
+                child: Icon(icon, color: color, size: 26),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -563,4 +621,193 @@ class _CardShimmer extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Featured Deal banner (top nearby promo) ───────────────────────────────────
+class _FeaturedDeal extends StatelessWidget {
+  final Promotion promotion;
+  final VoidCallback onTap;
+  const _FeaturedDeal({required this.promotion, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AppTheme.categoryColor(promotion.businessCategory ?? '');
+    return PressableScale(
+      onTap: onTap,
+      child: Container(
+        height: 156,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (promotion.imageUrl != null)
+              CachedNetworkImage(
+                imageUrl: promotion.imageUrl!,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => _gradient(color),
+              )
+            else
+              _gradient(color),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.black.withOpacity(0.7),
+                    Colors.black.withOpacity(0.15),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.22),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Text(
+                          '⭐ Featured',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.accentGradient,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          promotion.discountLabel,
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        promotion.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          color: Colors.white,
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.storefront_rounded,
+                              size: 13, color: Colors.white.withOpacity(0.85)),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              promotion.businessName ?? 'Local business',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (promotion.distanceMeters != null) ...[
+                            const SizedBox(width: 8),
+                            Icon(Icons.location_on_rounded,
+                                size: 13,
+                                color: Colors.white.withOpacity(0.85)),
+                            const SizedBox(width: 2),
+                            Text(
+                              promotion.formattedDistance,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                color: Colors.white.withOpacity(0.85),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (promotion.isLowStock ||
+                          promotion.currentRedemptions > 0) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              promotion.isLowStock
+                                  ? Icons.local_fire_department_rounded
+                                  : Icons.people_alt_rounded,
+                              size: 13,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              promotion.isLowStock
+                                  ? 'Only ${promotion.remainingRedemptions} left'
+                                  : '${promotion.currentRedemptions} claimed',
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    )
+        .animate()
+        .fadeIn(duration: 500.ms)
+        .slideY(begin: 0.15, end: 0, duration: 500.ms, curve: Curves.easeOut);
+  }
+
+  Widget _gradient(Color color) => DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [color, color.withOpacity(0.6)],
+          ),
+        ),
+      );
 }
