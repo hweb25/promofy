@@ -262,7 +262,7 @@ class _Header extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: const BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
+                        gradient: AppTheme.bannerGradient,
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -363,7 +363,7 @@ class _PromoBanner extends StatelessWidget {
         child: Container(
           height: 116,
           decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
+            gradient: AppTheme.bannerGradient,
             borderRadius: BorderRadius.circular(24),
             boxShadow: AppTheme.cardShadow,
           ),
@@ -420,7 +420,7 @@ class _PromoBanner extends StatelessWidget {
                           fontFamily: 'Poppins',
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryColor,
+                          color: AppTheme.violetAccent,
                         ),
                       ),
                     ),
@@ -504,14 +504,13 @@ class _CategoryIcon extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 58,
+              height: 58,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: color.withOpacity(0.2), width: 1.5),
+                color: color.withOpacity(0.14),
+                shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 26),
+              child: Icon(icon, color: color, size: 27),
             ),
             const SizedBox(height: 6),
             Text(

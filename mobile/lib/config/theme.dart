@@ -58,6 +58,15 @@ class AppTheme {
     colors: [secondaryColor, successColor],
   );
 
+  // Violet kept as a secondary accent for the promo banner + avatar
+  // (per the Stitch design: orange everywhere, violet on the banner/avatar).
+  static const Color violetAccent = Color(0xFF6C3DE0);
+  static const LinearGradient bannerGradient = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [Color(0xFF7A4BF0), Color(0xFF6C3DE0), Color(0xFF8B5CF6)],
+  );
+
   static const LinearGradient cardHeaderGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
