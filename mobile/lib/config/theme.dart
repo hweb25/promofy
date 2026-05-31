@@ -3,27 +3,27 @@ import 'package:flutter/services.dart';
 
 class AppTheme {
   // ── Brand Colors ──────────────────────────────────────────────────────────
-  static const Color primaryColor = Color(0xFF6C3DE0);   // deep violet
-  static const Color primaryLight = Color(0xFF9B70F5);
-  static const Color primaryDark  = Color(0xFF4A1DB8);
-  static const Color accentColor  = Color(0xFFFF6B35);   // warm orange-coral
-  static const Color accentLight  = Color(0xFFFF8C5A);
+  static const Color primaryColor = Color(0xFFFF441F);   // Rappi orange-red
+  static const Color primaryLight = Color(0xFFFF7A52);
+  static const Color primaryDark  = Color(0xFFC9300A);
+  static const Color accentColor  = Color(0xFFFF8A3D);   // warm orange
+  static const Color accentLight  = Color(0xFFFFA866);
 
-  static const Color secondaryColor = Color(0xFF00C9A7); // teal-mint success
-  static const Color successColor   = Color(0xFF10B981);
+  static const Color secondaryColor = Color(0xFF00C26E); // Rappi green (CTA/confirm)
+  static const Color successColor   = Color(0xFF14B85C);
   static const Color warningColor   = Color(0xFFF59E0B);
   static const Color errorColor     = Color(0xFFEF4444);
   static const Color infoColor      = Color(0xFF3B82F6);
 
   // ── Neutrals ──────────────────────────────────────────────────────────────
-  static const Color backgroundColor = Color(0xFFF7F5FF); // very faint lavender bg
+  static const Color backgroundColor = Color(0xFFF6F6F9); // clean neutral light
   static const Color surfaceColor    = Color(0xFFFFFFFF);
   static const Color cardColor       = Color(0xFFFFFFFF);
   static const Color textPrimary     = Color(0xFF1A1033);
   static const Color textSecondary   = Color(0xFF5E5878);
   static const Color textLight       = Color(0xFFADA7C0);
   static const Color dividerColor    = Color(0xFFEDE9F8);
-  static const Color inputFill       = Color(0xFFF2EFFC);
+  static const Color inputFill       = Color(0xFFF1F1F5);
 
   // ── Dark Mode ─────────────────────────────────────────────────────────────
   static const Color darkBackground = Color(0xFF110E22);
@@ -35,13 +35,13 @@ class AppTheme {
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primaryColor, primaryLight, Color(0xFFB57BFF)],
+    colors: [Color(0xFFFF5A2C), primaryColor, Color(0xFFE63912)],
   );
 
   static const LinearGradient splashGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF3D1BA6), primaryColor, Color(0xFF8050E8)],
+    colors: [Color(0xFFFF6B3D), primaryColor, Color(0xFFD6300E)],
   );
 
   static const LinearGradient accentGradient = LinearGradient(
@@ -108,7 +108,7 @@ class AppTheme {
         brightness: Brightness.light,
         primary: primaryColor,
         onPrimary: Colors.white,
-        primaryContainer: const Color(0xFFEDE8FF),
+        primaryContainer: const Color(0xFFFFE6DD),
         onPrimaryContainer: primaryDark,
         secondary: accentColor,
         onSecondary: Colors.white,

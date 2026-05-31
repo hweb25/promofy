@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../config/theme.dart';
-import '../../models/promotion.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/promotion_provider.dart';
 import '../../widgets/promotion_card.dart';
@@ -18,7 +16,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
     final nearbyPromos = ref.watch(nearbyPromotionsProvider);
-    final firstName =
+    final name =
         profile.valueOrNull?['full_name']?.toString().split(' ').first ?? 'there';
 
     return RefreshIndicator(
@@ -26,146 +24,61 @@ class HomeScreen extends ConsumerWidget {
       color: AppTheme.primaryColor,
       child: CustomScrollView(
         slivers: [
-          // ── Gradient Header ─────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _HomeHeader(firstName: firstName),
-          ),
+          // ── Clean white header: location + search + FAB ──────────────────
+          SliverToBoxAdapter(child: _Header(name: name)),
 
-          // ── Search + Filter Row ──────────────────────────────────────────
+          // ── Promo banner ─────────────────────────────────────────────────
+          const SliverToBoxAdapter(child: _PromoBanner()),
+
+          // ── Category grid (4 columns) ────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: _SearchBar(),
-            ),
-          ),
-
-          // ── Featured Deal (the screen's focal point) ─────────────────────
-          SliverToBoxAdapter(
-            child: Builder(
-              builder: (context) {
-                final promos = nearbyPromos.valueOrNull;
-                if (promos == null || promos.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                  child: _FeaturedDeal(
-                    promotion: promos.first,
-                    onTap: () => context
-                        .push('/consumer/promotion/${promos.first.id}'),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // ── Category Icons ───────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-                  child: Text(
-                    'Categories',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppTheme.textPrimary,
-                        ),
-                  ),
-                ),
-                // 4-column category grid (Rappi-style discovery layout)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  child: GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 8,
-                    childAspectRatio: 0.78,
-                    children: const [
-                      _CategoryIcon('Restaurant', Icons.restaurant_rounded, Color(0xFFFF6B35)),
-                      _CategoryIcon('Bar', Icons.local_bar_rounded, Color(0xFF7C3AED)),
-                      _CategoryIcon('Cafe', Icons.coffee_rounded, Color(0xFF92400E)),
-                      _CategoryIcon('Food Truck', Icons.delivery_dining_rounded, Color(0xFF059669)),
-                      _CategoryIcon('Bakery', Icons.cake_rounded, Color(0xFFDB2777)),
-                      _CategoryIcon('Pizza', Icons.local_pizza_rounded, Color(0xFFDC2626)),
-                      _CategoryIcon('Sushi', Icons.set_meal_rounded, Color(0xFF0284C7)),
-                      _CategoryIcon('Fast Food', Icons.fastfood_rounded, Color(0xFFD97706)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Near You ─────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Near You',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontSize: 20),
-                  ),
-                  TextButton(
-                    onPressed: () => context.go('/consumer/promotions'),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'See all',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        const SizedBox(width: 2),
-                        const Icon(Icons.arrow_forward_ios_rounded,
-                            size: 12, color: AppTheme.primaryColor),
-                      ],
-                    ),
-                  ),
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
+              child: GridView.count(
+                crossAxisCount: 4,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.8,
+                children: const [
+                  _CategoryIcon('Restaurant', Icons.restaurant_rounded, Color(0xFFFF6B35)),
+                  _CategoryIcon('Pizza', Icons.local_pizza_rounded, Color(0xFFDC2626)),
+                  _CategoryIcon('Burgers', Icons.lunch_dining_rounded, Color(0xFFD97706)),
+                  _CategoryIcon('Sushi', Icons.set_meal_rounded, Color(0xFF0284C7)),
+                  _CategoryIcon('Cafe', Icons.coffee_rounded, Color(0xFF92400E)),
+                  _CategoryIcon('Bakery', Icons.cake_rounded, Color(0xFFDB2777)),
+                  _CategoryIcon('Bar', Icons.local_bar_rounded, Color(0xFF7C3AED)),
+                  _CategoryIcon('More', Icons.grid_view_rounded, AppTheme.primaryColor),
                 ],
               ),
             ),
           ),
 
-          // Horizontal scroll near you
+          // ── Near you ─────────────────────────────────────────────────────
+          const SliverToBoxAdapter(child: _SectionHeader(title: 'Near you')),
           SliverToBoxAdapter(
             child: nearbyPromos.when(
               data: (promos) {
                 if (promos.isEmpty) return const SizedBox.shrink();
-                // Skip the deal already shown in the Featured hero so it isn't
-                // duplicated immediately below it.
-                final nearList =
-                    (promos.length > 1 ? promos.skip(1) : promos)
-                        .take(6)
-                        .toList();
+                final list = promos.take(6).toList();
                 return SizedBox(
-                  height: 220,
+                  height: 232,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: nearList.length,
+                    itemCount: list.length,
                     itemBuilder: (context, index) {
-                      final promo = nearList[index];
+                      final promo = list[index];
                       return Padding(
                         padding: const EdgeInsets.only(right: 14),
                         child: SizedBox(
-                          width: 200,
+                          width: 210,
                           child: PromotionCard(
                             promotion: promo,
                             compact: true,
-                            onTap: () => context.push(
-                                '/consumer/promotion/${promo.id}'),
+                            onTap: () =>
+                                context.push('/consumer/promotion/${promo.id}'),
                           ),
                         ),
                       );
@@ -178,59 +91,14 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Popular Deals ─────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Popular Deals',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleLarge
-                        ?.copyWith(fontSize: 20),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentColor.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.local_fire_department_rounded,
-                            size: 14, color: AppTheme.accentColor),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Hot',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.accentColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Vertical list of popular deals
+          // ── Popular now ──────────────────────────────────────────────────
+          const SliverToBoxAdapter(
+              child: _SectionHeader(title: 'Popular now', hot: true)),
           nearbyPromos.when(
             data: (promos) {
               if (promos.isEmpty) {
-                return SliverToBoxAdapter(
-                  child: _EmptyDeals(),
-                );
+                return SliverToBoxAdapter(child: _EmptyDeals(ref: ref));
               }
-              // Honest "Popular" ordering: most-claimed first (the label implied
-              // a ranking the raw nearby list didn't actually have).
               final popular = [...promos]
                 ..sort((a, b) =>
                     b.currentRedemptions.compareTo(a.currentRedemptions));
@@ -244,22 +112,20 @@ class HomeScreen extends ConsumerWidget {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: PromotionCard(
                           promotion: promo,
-                          onTap: () => context.push(
-                              '/consumer/promotion/${promo.id}'),
+                          onTap: () =>
+                              context.push('/consumer/promotion/${promo.id}'),
                         ),
                       )
                           .animate()
                           .fadeIn(
-                            delay: Duration(milliseconds: 60 * index),
-                            duration: 400.ms,
-                          )
+                              delay: Duration(milliseconds: 60 * index),
+                              duration: 400.ms)
                           .slideY(
-                            begin: 0.15,
-                            end: 0,
-                            delay: Duration(milliseconds: 60 * index),
-                            duration: 400.ms,
-                            curve: Curves.easeOut,
-                          );
+                              begin: 0.15,
+                              end: 0,
+                              delay: Duration(milliseconds: 60 * index),
+                              duration: 400.ms,
+                              curve: Curves.easeOut);
                     },
                     childCount: popular.length,
                   ),
@@ -270,8 +136,8 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (_, __) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                  (_, __) => const Padding(
+                    padding: EdgeInsets.only(bottom: 16),
                     child: _CardShimmer(),
                   ),
                   childCount: 4,
@@ -286,13 +152,12 @@ class HomeScreen extends ConsumerWidget {
                     const Icon(Icons.wifi_off_rounded,
                         size: 52, color: AppTheme.textLight),
                     const SizedBox(height: 12),
-                    Text(
-                      'Could not load deals',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                    Text('Could not load deals',
+                        style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
                     TextButton(
-                      onPressed: () => ref.invalidate(nearbyPromotionsProvider),
+                      onPressed: () =>
+                          ref.invalidate(nearbyPromotionsProvider),
                       child: const Text('Retry'),
                     ),
                   ],
@@ -308,58 +173,61 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-class _HomeHeader extends ConsumerWidget {
-  final String firstName;
-  const _HomeHeader({required this.firstName});
+// ── Clean header (location + search + FAB) ────────────────────────────────────
+class _Header extends StatelessWidget {
+  final String name;
+  const _Header({required this.name});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
     return Container(
-      decoration: const BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(36),
-          bottomRight: Radius.circular(36),
-        ),
-      ),
+      color: AppTheme.surfaceColor,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  // Greeting
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _getGreeting(),
+                        const Text(
+                          'YOUR AREA',
                           style: TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 13,
-                            color: Colors.white.withOpacity(0.78),
-                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.4,
+                            color: AppTheme.textLight,
                           ),
                         ),
-                        Text(
-                          '$firstName!',
-                          style: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
+                        const SizedBox(height: 1),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded,
+                                size: 17, color: AppTheme.primaryColor),
+                            const SizedBox(width: 3),
+                            Text(
+                              'Deals near you',
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            const Icon(Icons.keyboard_arrow_down_rounded,
+                                size: 18, color: AppTheme.textPrimary),
+                          ],
                         ),
                       ],
                     ),
                   ),
-
-                  // Notification bell
+                  // notification bell
                   GestureDetector(
                     onTap: () => ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -376,58 +244,188 @@ class _HomeHeader extends ConsumerWidget {
                       ),
                     ),
                     child: Container(
-                      width: 44,
-                      height: 44,
-                      margin: const EdgeInsets.only(right: 8),
+                      width: 42,
+                      height: 42,
+                      margin: const EdgeInsets.only(right: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: AppTheme.inputFill,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(Icons.notifications_outlined,
-                          color: Colors.white, size: 22),
+                      child: const Icon(Icons.notifications_none_rounded,
+                          color: AppTheme.textPrimary, size: 21),
                     ),
                   ),
-
-                  // Avatar
+                  // avatar → profile
                   GestureDetector(
                     onTap: () => context.go('/consumer/profile'),
                     child: Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person_rounded,
-                          color: AppTheme.primaryColor, size: 24),
+                      alignment: Alignment.center,
+                      child: Text(
+                        initial,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              const _SearchBar(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-              const SizedBox(height: 6),
+// ── Search pill + FAB ─────────────────────────────────────────────────────────
+class _SearchBar extends StatelessWidget {
+  const _SearchBar();
 
-              Row(
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () => context.push('/consumer/promotions'),
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppTheme.inputFill,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Row(
                 children: [
-                  const Icon(Icons.location_on_rounded,
-                      size: 14, color: Colors.white70),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 14),
+                  Icon(Icons.search_rounded,
+                      color: AppTheme.textLight, size: 21),
+                  SizedBox(width: 10),
                   Text(
-                    'Discovering deals near you',
+                    'Search deals, places…',
                     style: TextStyle(
                       fontFamily: 'Poppins',
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.75),
+                      color: AppTheme.textLight,
+                      fontSize: 13,
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: () => context.push('/consumer/promotions'),
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.4),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.tune_rounded, color: Colors.white, size: 21),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Promo banner ──────────────────────────────────────────────────────────────
+class _PromoBanner extends StatelessWidget {
+  const _PromoBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+      child: PressableScale(
+        onTap: () => context.push('/consumer/promotions'),
+        child: Container(
+          height: 116,
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: AppTheme.cardShadow,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              Positioned(
+                right: -6,
+                bottom: -18,
+                child: Text(
+                  '🎉',
+                  style: TextStyle(
+                    fontSize: 92,
+                    color: Colors.white.withOpacity(0.25),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Up to 50% OFF',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'this week at top local spots',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.92),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: const Text(
+                        'Explore deals',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -435,54 +433,52 @@ class _HomeHeader extends ConsumerWidget {
       ),
     );
   }
-
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning,';
-    if (hour < 17) return 'Good afternoon,';
-    return 'Good evening,';
-  }
 }
 
-// ── Search Bar ────────────────────────────────────────────────────────────────
-class _SearchBar extends StatelessWidget {
+// ── Section header ──────────────────────────────────────────────────────────────
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final bool hot;
+  const _SectionHeader({required this.title, this.hot = false});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceColor,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: AppTheme.softShadow,
-      ),
-      child: TextField(
-        readOnly: true,
-        onTap: () => context.push('/consumer/promotions'),
-        decoration: InputDecoration(
-          hintText: 'Search deals, restaurants...',
-          hintStyle: const TextStyle(
-            fontFamily: 'Poppins',
-            color: AppTheme.textLight,
-            fontSize: 13,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 26, 20, 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              if (hot) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.local_fire_department_rounded,
+                    size: 18, color: AppTheme.accentColor),
+              ],
+            ],
           ),
-          prefixIcon: const Icon(Icons.search_rounded,
-              color: AppTheme.textLight, size: 22),
-          suffixIcon: Container(
-            margin: const EdgeInsets.all(8),
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: AppTheme.primaryGradient,
-              borderRadius: BorderRadius.circular(12),
+          GestureDetector(
+            onTap: () => context.go('/consumer/promotions'),
+            child: const Text(
+              'See all',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.primaryColor,
+              ),
             ),
-            child: const Icon(Icons.tune_rounded, color: Colors.white, size: 18),
           ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          filled: false,
-        ),
+        ],
       ),
     );
   }
@@ -493,7 +489,6 @@ class _CategoryIcon extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
-
   const _CategoryIcon(this.label, this.icon, this.color);
 
   @override
@@ -538,12 +533,15 @@ class _CategoryIcon extends StatelessWidget {
   }
 }
 
-// ── Empty State ───────────────────────────────────────────────────────────────
+// ── Empty state ───────────────────────────────────────────────────────────────
 class _EmptyDeals extends StatelessWidget {
+  final WidgetRef ref;
+  const _EmptyDeals({required this.ref});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
       child: Column(
         children: [
           Container(
@@ -557,14 +555,12 @@ class _EmptyDeals extends StatelessWidget {
                 size: 38, color: AppTheme.primaryColor),
           ),
           const SizedBox(height: 16),
-          Text(
-            'No deals nearby yet',
-            style: Theme.of(context).textTheme.titleMedium,
-            textAlign: TextAlign.center,
-          ),
+          Text('No deals nearby yet',
+              style: Theme.of(context).textTheme.titleMedium,
+              textAlign: TextAlign.center),
           const SizedBox(height: 8),
-          Text(
-            'Pull down to refresh or try expanding\nyour search radius.',
+          const Text(
+            'Pull down to refresh or try widening your search radius.',
             style: TextStyle(
               fontFamily: 'Poppins',
               color: AppTheme.textSecondary,
@@ -573,18 +569,28 @@ class _EmptyDeals extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: () => ref.invalidate(nearbyPromotionsProvider),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Refresh'),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ── Shimmer Loading ───────────────────────────────────────────────────────────
+// ── Shimmer loaders ─────────────────────────────────────────────────────────────
 class _HorizontalShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 220,
+      height: 232,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -592,11 +598,11 @@ class _HorizontalShimmer extends StatelessWidget {
         itemBuilder: (_, __) => Padding(
           padding: const EdgeInsets.only(right: 14),
           child: Shimmer.fromColors(
-            baseColor: const Color(0xFFE8E4F7),
+            baseColor: const Color(0xFFEAE9F0),
             highlightColor: Colors.white,
             child: Container(
-              width: 200,
-              height: 220,
+              width: 210,
+              height: 232,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -610,10 +616,12 @@ class _HorizontalShimmer extends StatelessWidget {
 }
 
 class _CardShimmer extends StatelessWidget {
+  const _CardShimmer();
+
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE8E4F7),
+      baseColor: const Color(0xFFEAE9F0),
       highlightColor: Colors.white,
       child: Container(
         height: 140,
@@ -624,193 +632,4 @@ class _CardShimmer extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Featured Deal banner (top nearby promo) ───────────────────────────────────
-class _FeaturedDeal extends StatelessWidget {
-  final Promotion promotion;
-  final VoidCallback onTap;
-  const _FeaturedDeal({required this.promotion, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = AppTheme.categoryColor(promotion.businessCategory ?? '');
-    return PressableScale(
-      onTap: onTap,
-      child: Container(
-        height: 156,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: AppTheme.cardShadow,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (promotion.imageUrl != null)
-              CachedNetworkImage(
-                imageUrl: promotion.imageUrl!,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => _gradient(color),
-              )
-            else
-              _gradient(color),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.black.withOpacity(0.7),
-                    Colors.black.withOpacity(0.15),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.22),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Text(
-                          '⭐ Featured',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.accentGradient,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          promotion.discountLabel,
-                          style: const TextStyle(
-                            fontFamily: 'Poppins',
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        promotion.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          color: Colors.white,
-                          fontSize: 19,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(Icons.storefront_rounded,
-                              size: 13, color: Colors.white.withOpacity(0.85)),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              promotion.businessName ?? 'Local business',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          if (promotion.distanceMeters != null) ...[
-                            const SizedBox(width: 8),
-                            Icon(Icons.location_on_rounded,
-                                size: 13,
-                                color: Colors.white.withOpacity(0.85)),
-                            const SizedBox(width: 2),
-                            Text(
-                              promotion.formattedDistance,
-                              style: TextStyle(
-                                fontFamily: 'Poppins',
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      if (promotion.isLowStock ||
-                          promotion.currentRedemptions > 0) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              promotion.isLowStock
-                                  ? Icons.local_fire_department_rounded
-                                  : Icons.people_alt_rounded,
-                              size: 13,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              promotion.isLowStock
-                                  ? 'Only ${promotion.remainingRedemptions} left'
-                                  : '${promotion.currentRedemptions} claimed',
-                              style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    )
-        .animate()
-        .fadeIn(duration: 500.ms)
-        .slideY(begin: 0.15, end: 0, duration: 500.ms, curve: Curves.easeOut);
-  }
-
-  Widget _gradient(Color color) => DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color, color.withOpacity(0.6)],
-          ),
-        ),
-      );
 }
