@@ -676,14 +676,14 @@ class _ClaimBar extends StatelessWidget {
           height: 58,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: isClaiming ? null : AppTheme.accentGradient,
-              color: isClaiming ? AppTheme.accentColor.withOpacity(0.4) : null,
+              gradient: isClaiming ? null : AppTheme.actionGradient,
+              color: isClaiming ? AppTheme.secondaryColor.withOpacity(0.4) : null,
               borderRadius: BorderRadius.circular(18),
               boxShadow: isClaiming
                   ? []
                   : [
                       BoxShadow(
-                        color: AppTheme.accentColor.withOpacity(0.45),
+                        color: AppTheme.secondaryColor.withOpacity(0.45),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),

@@ -232,16 +232,31 @@ class _FullCard extends StatelessWidget {
                     ),
                   ),
 
-                  // Arrow
+                  // Claim action (Rappi-style); tapping the card opens the
+                  // claim flow, so this reads as the call-to-action.
                   Container(
-                    width: 34,
-                    height: 34,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.08),
+                      gradient: AppTheme.actionGradient,
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.secondaryColor.withOpacity(0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: const Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14, color: AppTheme.primaryColor),
+                    child: const Text(
+                      'Claim',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ],
               ),

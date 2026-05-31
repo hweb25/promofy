@@ -328,7 +328,11 @@ class _ActiveView extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+
+          // ── Progress tracker (Rappi-style numbered steps) ─────────────────
+          const _StepTracker(activeStep: 1),
+          const SizedBox(height: 22),
 
           // ── QR card with a soft pulsing glow so it feels "alive" ──────────
           _PulsingGlow(
@@ -962,4 +966,82 @@ class _ConfettiPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ConfettiPainter old) => old.progress != progress;
+}
+
+// ── Step tracker (Claimed → Show code → Redeemed) ─────────────────────────────
+class _StepTracker extends StatelessWidget {
+  final int activeStep; // 0-based
+  const _StepTracker({required this.activeStep});
+
+  static const _labels = ['Claimed', 'Show code', 'Redeemed'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(_labels.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          final done = (i ~/ 2) < activeStep;
+          return Expanded(
+            child: Container(
+              height: 3,
+              margin: const EdgeInsets.only(top: 14),
+              decoration: BoxDecoration(
+                color: done ? AppTheme.secondaryColor : AppTheme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }
+        final step = i ~/ 2;
+        final done = step < activeStep;
+        final active = step == activeStep;
+        final color = done
+            ? AppTheme.secondaryColor
+            : active
+                ? AppTheme.primaryColor
+                : AppTheme.textLight;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: (done || active) ? color : AppTheme.inputFill,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: (done || active) ? color : AppTheme.dividerColor,
+                  width: 2,
+                ),
+              ),
+              child: done
+                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
+                  : Center(
+                      child: Text(
+                        '${step + 1}',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: active ? Colors.white : AppTheme.textLight,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              _labels[step],
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 10.5,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                color: active ? AppTheme.primaryColor : AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
 }

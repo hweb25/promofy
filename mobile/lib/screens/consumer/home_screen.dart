@@ -73,11 +73,16 @@ class HomeScreen extends ConsumerWidget {
                         ),
                   ),
                 ),
-                SizedBox(
-                  height: 92,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                // 4-column category grid (Rappi-style discovery layout)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                  child: GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 0.78,
                     children: const [
                       _CategoryIcon('Restaurant', Icons.restaurant_rounded, Color(0xFFFF6B35)),
                       _CategoryIcon('Bar', Icons.local_bar_rounded, Color(0xFF7C3AED)),
@@ -493,42 +498,40 @@ class _CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: PressableScale(
-        onTap: () => context.push('/consumer/promotions'),
-        pressedScale: 0.92,
-        child: Semantics(
-          button: true,
-          label: label,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: color.withOpacity(0.2), width: 1.5),
-                ),
-                child: Icon(icon, color: color, size: 26),
+    return PressableScale(
+      onTap: () => context.push('/consumer/promotions'),
+      pressedScale: 0.92,
+      child: Semantics(
+        button: true,
+        label: label,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: color.withOpacity(0.2), width: 1.5),
               ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              child: Icon(icon, color: color, size: 26),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textSecondary,
               ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );

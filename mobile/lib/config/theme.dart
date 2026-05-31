@@ -50,6 +50,14 @@ class AppTheme {
     colors: [accentColor, Color(0xFFFF8E53)],
   );
 
+  // Teal "action/confirm" gradient — Promofy's equivalent of the Rappi-style
+  // green CTA: reserved for claim / redeem / confirm actions.
+  static const LinearGradient actionGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [secondaryColor, successColor],
+  );
+
   static const LinearGradient cardHeaderGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
