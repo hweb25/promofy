@@ -8,7 +8,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../config/theme.dart';
 import '../../services/supabase_service.dart';
-import '../../widgets/effects.dart';
 
 class RedemptionScreen extends ConsumerStatefulWidget {
   final String redemptionId;
@@ -22,7 +21,6 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
   Map<String, dynamic>? _redemption;
   Timer? _timer;
   Duration _timeRemaining = Duration.zero;
-  Duration _totalWindow = const Duration(minutes: 30);
   bool _isRedeemed = false;
   bool _error = false;
   StreamSubscription? _sub;
@@ -44,20 +42,8 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
 
       if (!mounted) return;
 
-      // Compute the full validity window so the countdown ring is accurate.
-      Duration window = const Duration(minutes: 30);
-      try {
-        final expires = DateTime.parse(data['expires_at']);
-        if (data['created_at'] != null) {
-          final created = DateTime.parse(data['created_at']);
-          final diff = expires.difference(created);
-          if (diff.inSeconds > 0) window = diff;
-        }
-      } catch (_) {}
-
       setState(() {
         _redemption = data;
-        _totalWindow = window;
         _isRedeemed = data['status'] == 'redeemed';
       });
 
@@ -99,7 +85,6 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
   void _onRedeemed() {
     if (_isRedeemed) return;
     _timer?.cancel();
-    // Celebratory haptic — the emotional peak of the whole journey.
     HapticFeedback.mediumImpact();
     setState(() => _isRedeemed = true);
   }
@@ -111,7 +96,6 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
     super.dispose();
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
   String _discountLabel(Map<String, dynamic>? promo) {
     if (promo == null) return 'Deal';
     final type = promo['discount_type'];
@@ -130,8 +114,6 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
     }
   }
 
-  /// Literal amount saved, when an original price is known — the emotional
-  /// payoff number for the success screen. Null when it can't be computed.
   String? _savedLabel(Map<String, dynamic>? promo) {
     if (promo == null) return null;
     final orig = (promo['original_price'] as num?)?.toDouble();
@@ -222,21 +204,8 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
           backgroundColor: AppTheme.surfaceColor,
           foregroundColor: AppTheme.textPrimary,
         ),
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                width: 38,
-                height: 38,
-                child: CircularProgressIndicator(
-                    strokeWidth: 3, color: AppTheme.primaryColor),
-              ),
-              const SizedBox(height: 18),
-              Text('Preparing your offer…',
-                  style: Theme.of(context).textTheme.bodyMedium),
-            ],
-          ),
+        body: const Center(
+          child: CircularProgressIndicator(color: AppTheme.primaryColor),
         ),
       );
     }
@@ -264,398 +233,171 @@ class _RedemptionScreenState extends ConsumerState<RedemptionScreen> {
               onDone: () => context.go('/consumer'),
             )
           : _ActiveView(
-              code: code,
               qrData: _redemption!['qr_data']?.toString() ?? code,
               businessName: business?['name']?.toString() ?? 'Business',
               promoTitle: promotion?['title']?.toString() ?? 'Promotion',
               discountLabel: _discountLabel(promotion),
               timeRemaining: _timeRemaining,
-              totalWindow: _totalWindow,
               isExpired: isExpired,
             ),
     );
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ACTIVE STATE — the live QR with a "breathing" glow and a countdown ring
-// ════════════════════════════════════════════════════════════════════════════
+// ── Active state — clean QR card (Stitch style) ───────────────────────────────
 class _ActiveView extends StatelessWidget {
-  final String code;
   final String qrData;
   final String businessName;
   final String promoTitle;
   final String discountLabel;
   final Duration timeRemaining;
-  final Duration totalWindow;
   final bool isExpired;
 
   const _ActiveView({
-    required this.code,
     required this.qrData,
     required this.businessName,
     required this.promoTitle,
     required this.discountLabel,
     required this.timeRemaining,
-    required this.totalWindow,
     required this.isExpired,
   });
 
   @override
   Widget build(BuildContext context) {
+    final mm = timeRemaining.inMinutes;
+    final ss = (timeRemaining.inSeconds % 60).toString().padLeft(2, '0');
+    final urgent = !isExpired && timeRemaining.inMinutes < 5;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
       child: Column(
         children: [
-          // Business + title
-          Text(
-            businessName,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: AppTheme.textPrimary,
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: AppTheme.cardShadow,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            promoTitle,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-
-          // ── Progress tracker (Rappi-style numbered steps) ─────────────────
-          const _StepTracker(activeStep: 1),
-          const SizedBox(height: 22),
-
-          // ── QR card with a soft pulsing glow so it feels "alive" ──────────
-          _PulsingGlow(
-            active: !isExpired,
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: AppTheme.cardShadow,
-              ),
-              child: Column(
-                children: [
-                  // discount chip on top of the QR
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 7),
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.accentGradient,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.accentColor.withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+            child: Column(
+              children: [
+                Text(
+                  businessName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.violetAccent,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '$promoTitle · $discountLabel',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 26),
+                Opacity(
+                  opacity: isExpired ? 0.25 : 1,
+                  child: QrImageView(
+                    data: qrData,
+                    version: QrVersions.auto,
+                    size: 220,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: AppTheme.textPrimary,
                     ),
-                    child: Text(
-                      discountLabel,
-                      style: const TextStyle(
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                if (!isExpired) ...[
+                  const Text(
+                    'Show this to the server to redeem',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Expires in: $mm:$ss',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: urgent ? AppTheme.errorColor : AppTheme.textPrimary,
+                    ),
+                  ),
+                ] else
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.errorColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'CODE EXPIRED',
+                      style: TextStyle(
                         fontFamily: 'Poppins',
-                        color: Colors.white,
+                        color: AppTheme.errorColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 15,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Opacity(
-                    opacity: isExpired ? 0.25 : 1,
-                    child: QrImageView(
-                      data: qrData,
-                      version: QrVersions.auto,
-                      size: 230,
-                      eyeStyle: const QrEyeStyle(
-                        eyeShape: QrEyeShape.circle,
-                        color: AppTheme.primaryColor,
-                      ),
-                      dataModuleStyle: const QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.circle,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  // code chip — tap to copy (fallback when staff can't scan)
-                  PressableScale(
-                    pressedScale: 0.97,
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: code));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Code copied',
-                              style: TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w500)),
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.inputFill,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            code,
-                            style: const TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 6,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Icon(Icons.copy_rounded,
-                              size: 18,
-                              color: AppTheme.primaryColor.withOpacity(0.6)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           )
               .animate()
-              .fadeIn(duration: 450.ms)
+              .fadeIn(duration: 400.ms)
               .scale(
-                begin: const Offset(0.92, 0.92),
+                begin: const Offset(0.95, 0.95),
                 end: const Offset(1, 1),
-                duration: 450.ms,
-                curve: Curves.easeOutBack,
+                duration: 400.ms,
+                curve: Curves.easeOut,
               ),
-
-          const SizedBox(height: 28),
-
-          // ── Countdown ring or expired badge ───────────────────────────────
-          if (!isExpired)
-            _CountdownRing(remaining: timeRemaining, total: totalWindow)
-          else
-            Column(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.errorColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Text(
-                    'CODE EXPIRED',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: AppTheme.errorColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: () => context.go('/consumer'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    isExpired ? AppTheme.primaryColor : AppTheme.infoColor,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(
+                isExpired ? 'Back to deals' : 'Done',
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: 14),
-                const Text(
-                  'This code expired — grab it again from the deal.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () => context.go('/consumer'),
-                    icon: const Icon(Icons.local_offer_rounded, size: 18),
-                    label: const Text('Back to deals'),
-                  ),
-                ),
-              ],
+              ),
             ),
-
-          const SizedBox(height: 28),
-
-          // ── Instructions ──────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.12), width: 1),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.qr_code_scanner_rounded,
-                      color: AppTheme.primaryColor, size: 20),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Show this code to the staff to redeem your offer. '
-                    'It updates live the moment they scan it.',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: AppTheme.textSecondary,
-                      fontSize: 13,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
+          ),
         ],
       ),
     );
   }
 }
 
-// ── Pulsing glow wrapper (gentle "alive" breathing behind the QR) ─────────────
-class _PulsingGlow extends StatelessWidget {
-  final Widget child;
-  final bool active;
-  const _PulsingGlow({required this.child, required this.active});
-
-  @override
-  Widget build(BuildContext context) {
-    if (!active) return child;
-    return child
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .custom(
-          duration: 1800.ms,
-          curve: Curves.easeInOut,
-          builder: (context, value, child) => DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor
-                      .withOpacity(0.10 + 0.16 * value),
-                  blurRadius: 24 + 26 * value,
-                  spreadRadius: 1 + 3 * value,
-                ),
-              ],
-            ),
-            child: child,
-          ),
-        );
-  }
-}
-
-// ── Countdown ring ────────────────────────────────────────────────────────────
-class _CountdownRing extends StatelessWidget {
-  final Duration remaining;
-  final Duration total;
-  const _CountdownRing({required this.remaining, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    final totalSecs = total.inSeconds <= 0 ? 1 : total.inSeconds;
-    final pct = (remaining.inSeconds / totalSecs).clamp(0.0, 1.0);
-    final urgent = remaining.inMinutes < 5;
-    final ringColor = urgent ? AppTheme.accentColor : AppTheme.primaryColor;
-    final mm = remaining.inMinutes;
-    final ss = (remaining.inSeconds % 60).toString().padLeft(2, '0');
-
-    return Column(
-      children: [
-        SizedBox(
-          width: 120,
-          height: 120,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 120,
-                height: 120,
-                child: CircularProgressIndicator(
-                  value: pct,
-                  strokeWidth: 8,
-                  strokeCap: StrokeCap.round,
-                  backgroundColor: ringColor.withOpacity(0.12),
-                  valueColor: AlwaysStoppedAnimation<Color>(ringColor),
-                ),
-              ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$mm:$ss',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: urgent ? AppTheme.accentColor : AppTheme.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    'left',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      color: AppTheme.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        )
-            .animate(target: urgent ? 1 : 0)
-            .scaleXY(end: 1.05, duration: 600.ms, curve: Curves.easeInOut),
-        const SizedBox(height: 10),
-        Text(
-          urgent ? 'Hurry — expiring soon!' : 'Time to redeem',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: urgent ? AppTheme.accentColor : AppTheme.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ════════════════════════════════════════════════════════════════════════════
-// SUCCESS STATE — the peak moment: confetti, glowing check, savings affirmation
-// ════════════════════════════════════════════════════════════════════════════
+// ── Success state — confetti peak + "You saved $X" ────────────────────────────
 class _SuccessView extends StatelessWidget {
   final String businessName;
   final String discountLabel;
@@ -675,17 +417,13 @@ class _SuccessView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Confetti burst behind the content
         const Positioned.fill(child: _Confetti()),
-
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
             child: Column(
               children: [
                 const Spacer(),
-
-                // Glowing animated check
                 Container(
                   width: 120,
                   height: 120,
@@ -715,12 +453,10 @@ class _SuccessView extends StatelessWidget {
                       curve: Curves.elasticOut,
                     )
                     .fadeIn(duration: 250.ms),
-
                 const SizedBox(height: 28),
-
-                Text(
+                const Text(
                   'Redeemed!',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
@@ -730,9 +466,7 @@ class _SuccessView extends StatelessWidget {
                     .animate()
                     .fadeIn(delay: 200.ms, duration: 400.ms)
                     .slideY(begin: 0.3, end: 0, delay: 200.ms, duration: 400.ms),
-
                 const SizedBox(height: 8),
-
                 Text(
                   'Enjoy your deal at $businessName 🎉',
                   textAlign: TextAlign.center,
@@ -743,7 +477,6 @@ class _SuccessView extends StatelessWidget {
                     height: 1.4,
                   ),
                 ).animate().fadeIn(delay: 320.ms, duration: 400.ms),
-
                 if (savedLabel != null) ...[
                   const SizedBox(height: 22),
                   const Text(
@@ -774,13 +507,10 @@ class _SuccessView extends StatelessWidget {
                       )
                       .fadeIn(delay: 380.ms, duration: 300.ms),
                 ],
-
                 const SizedBox(height: 28),
-
-                // Savings affirmation card (the "vanity mirror" — celebrate the win)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 18),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceColor,
                     borderRadius: BorderRadius.circular(20),
@@ -825,10 +555,7 @@ class _SuccessView extends StatelessWidget {
                     .animate()
                     .fadeIn(delay: 450.ms, duration: 450.ms)
                     .slideY(begin: 0.3, end: 0, delay: 450.ms, duration: 450.ms),
-
                 const Spacer(),
-
-                // Done — gentle closure (end of the peak-end journey)
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -879,7 +606,7 @@ class _ConfettiState extends State<_Confetti>
       AppTheme.accentColor,
       AppTheme.secondaryColor,
       AppTheme.warningColor,
-      AppTheme.primaryLight,
+      AppTheme.violetAccent,
     ];
     _pieces = List.generate(80, (i) {
       return _ConfettiPiece(
@@ -966,82 +693,4 @@ class _ConfettiPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ConfettiPainter old) => old.progress != progress;
-}
-
-// ── Step tracker (Claimed → Show code → Redeemed) ─────────────────────────────
-class _StepTracker extends StatelessWidget {
-  final int activeStep; // 0-based
-  const _StepTracker({required this.activeStep});
-
-  static const _labels = ['Claimed', 'Show code', 'Redeemed'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(_labels.length * 2 - 1, (i) {
-        if (i.isOdd) {
-          final done = (i ~/ 2) < activeStep;
-          return Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(top: 14),
-              decoration: BoxDecoration(
-                color: done ? AppTheme.secondaryColor : AppTheme.dividerColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          );
-        }
-        final step = i ~/ 2;
-        final done = step < activeStep;
-        final active = step == activeStep;
-        final color = done
-            ? AppTheme.secondaryColor
-            : active
-                ? AppTheme.primaryColor
-                : AppTheme.textLight;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: (done || active) ? color : AppTheme.inputFill,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: (done || active) ? color : AppTheme.dividerColor,
-                  width: 2,
-                ),
-              ),
-              child: done
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
-                  : Center(
-                      child: Text(
-                        '${step + 1}',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: active ? Colors.white : AppTheme.textLight,
-                        ),
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              _labels[step],
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 10.5,
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                color: active ? AppTheme.primaryColor : AppTheme.textSecondary,
-              ),
-            ),
-          ],
-        );
-      }),
-    );
-  }
 }
