@@ -34,11 +34,20 @@ android {
         multiDexEnabled true
     }
 
+    signingConfigs {
+        release {
+            storeFile file("promofy-keystore.jks")
+            storePassword "promofy123"
+            keyAlias "promofy"
+            keyPassword "promofy123"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Stable signing key (committed) so every cloud build shares one
+            // signature and installs over the previous one — no uninstall needed.
+            signingConfig = signingConfigs.release
         }
     }
 }
